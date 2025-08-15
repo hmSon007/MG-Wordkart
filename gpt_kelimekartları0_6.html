@@ -1,0 +1,2221 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MG WordKart</title>
+    <style>
+        :root{
+            --bg:#0f172a;           /* slate-900 */
+            --panel:#111827;        /* gray-900 */
+            --muted:#94a3b8;        /* slate-400 */
+            --text:#e5e7eb;         /* gray-200 */
+            --accent:#22d3ee;       /* cyan-400 */
+            --accent-2:#6366f1;     /* indigo-500 */
+            --good:#10b981;         /* emerald-500 */
+            --bad:#ef4444;          /* red-500 */
+        }
+        *{box-sizing:border-box}
+        html,body{height:100%}
+        body{
+            margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+            background: radial-gradient(1200px 800px at 70% -10%, #1f2937 0%, var(--bg) 60%);
+            color:var(--text);
+        }
+        .wrap{min-height:100%; display:flex; align-items:center; justify-content:center; padding:24px}
+        .panel{width:min(960px,100%); background:linear-gradient(180deg, rgba(255,255,255,0.04), transparent 120px), var(--panel); border:1px solid rgba(255,255,255,0.08); box-shadow:0 10px 40px rgba(0,0,0,0.35); border-radius:20px; padding:24px}
+        header{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px}
+        .brand{display:flex; align-items:center; gap:12px}
+        .logo{width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg, var(--accent), var(--accent-2)); display:grid; place-items:center; font-weight:700; color:#061018}
+        h1{font-size:20px; margin:0}
+        .muted{color:var(--muted)}
+
+        /* VIEWS */
+        .view{display:none}
+        .view.active{display:block}
+
+        /* HOME */
+        .home-grid{display:grid; grid-template-columns: 1.2fr 1fr; gap:24px}
+        @media (max-width: 800px){ .home-grid{grid-template-columns:1fr;}}
+        .card{background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:20px}
+        .row{display:flex; align-items:center; justify-content:space-between; gap:12px}
+        .kpi{font-size:32px; font-weight:700}
+        .range{width:100%}
+        input[type=range]{width:100%}
+        .btn{appearance:none; border:0; padding:12px 16px; border-radius:12px; font-weight:700; cursor:pointer}
+        .btn.primary{background:linear-gradient(135deg, var(--accent), var(--accent-2)); color:#061018}
+        .btn.ghost{background:transparent; color:var(--text); border:1px solid rgba(255,255,255,0.15)}
+        
+        /* Yeni buton stilleri */
+        .btn.gradient-blue{
+            background: linear-gradient(90deg, #6366f1, #22d3ee);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(34, 211, 238, 0.3);
+            transition: all 0.3s ease;
+        }
+        .btn.gradient-blue:hover{
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(34, 211, 238, 0.4);
+        }
+        
+        .btn.gradient-cyan{
+            background: linear-gradient(90deg, #22d3ee, #6366f1);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+            transition: all 0.3s ease;
+        }
+        .btn.gradient-cyan:hover{
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        }
+        
+        /* Kaydet butonu için yeni gradyan stili */
+        .btn.gradient-green{
+            background: linear-gradient(90deg, var(--good), var(--accent));
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+            transition: all 0.3s ease;
+        }
+        .btn.gradient-green:hover{
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+        }
+
+        /* Seviye butonları için yeni stil */
+        .level-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .level-button {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text);
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        .level-button:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+        .level-button.active {
+            background: var(--accent-2);
+            color: white;
+            border-color: var(--accent-2);
+        }
+
+
+        /* FLASHCARDS */
+        .topbar{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px}
+        .counter{font-variant-numeric: tabular-nums; font-weight:700}
+        .flash-wrap{display:grid; gap:16px; place-items:center}
+        .flip-scene{width:min(560px, 92vw); height:320px; perspective:1200px}
+        .flip-card{position:relative; width:100%; height:100%; transform-style:preserve-3d; transition:transform .5s ease}
+        .flip-card.is-flipped{transform:rotateY(180deg)}
+        .face{
+            position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; text-align:center;
+            border-radius:18px; border:1px solid rgba(255,255,255,0.12);
+            background:linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+            box-shadow:inset 0 1px 0 rgba(255,255,255,0.05);
+            /* This line prevents the back of the card from being visible from the front */
+            backface-visibility: hidden;
+        }
+        .face.back{transform:rotateY(180deg)}
+        .word{
+            font-size: clamp(22px, 5vw, 36px);
+            font-weight: 700;
+            line-height:1.2
+        }
+        .sentence {
+            margin-top: 12px;
+            font-size: clamp(14px, 3vw, 18px);
+            color: var(--muted);
+            line-height: 1.4;
+        }
+        .speak{
+            display:flex; gap:8px;
+            /* These lines ensure the buttons are only visible on the respective face */
+            position:absolute; bottom:10px; right:10px;
+        }
+        .speak button{border:1px solid rgba(255,255,255,0.15); background:rgba(0,0,0,0.25); color:var(--text); border-radius:10px; padding:6px 10px; cursor:pointer; opacity:0.8;}
+        .speak button:hover{opacity:1;}
+
+        .controls{display:flex; gap:12px; flex-wrap:wrap; justify-content: center;}
+        .controls .btn{min-width:120px}
+        
+        /* VIEWED CARDS LIST */
+        .word-list{display: grid; gap: 8px;}
+        .word-list-item{
+            display: flex;
+            flex-direction: column; /* Değiştirildi */
+            justify-content: space-between;
+            align-items: flex-start; /* Değiştirildi */
+            padding: 10px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+        }
+        .word-list-item:hover{background: rgba(255, 255, 255, 0.1);}
+        .word-and-level {
+            display: flex;
+            align-items: center;
+        }
+        .word-list-en {
+            font-weight: 600;
+        }
+        .word-list-tr {
+            color: var(--muted);
+        }
+        .word-list-level {
+            margin-left: 12px;
+            font-size: 0.8em;
+            color: var(--accent);
+            background: rgba(34, 211, 238, 0.15);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: 700;
+        }
+        .word-list-sentence {
+            font-size: 0.9em;
+            color: var(--muted);
+            margin-top: 4px;
+        }
+        
+        /* ADD CARD */
+        .add-card-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .add-card-form label {
+            color: var(--muted);
+            font-size: 14px;
+        }
+        .add-card-form input, .add-card-form select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text);
+            font-size: 16px;
+        }
+        .add-card-form input:focus, .add-card-form select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        .add-card-form .btn {
+            width: 100%;
+        }
+        .message {
+            margin-top: 12px;
+            text-align: center;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .message.show {
+            opacity: 1;
+        }
+        
+        /* ABOUT & CONTACT */
+        .about-content{padding: 16px; line-height: 1.6;}
+        .about-footer{
+            margin-top: 24px;
+            text-align: center;
+            font-size: 2.5em; /* Kocaman font */
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.1); /* Hafif soluk renk */
+        }
+
+        /* QUIZ VIEW */
+        .quiz-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        .quiz-question {
+            font-size: clamp(20px, 5vw, 32px);
+            font-weight: 700;
+            text-align: center;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .quiz-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            width: 100%;
+            max-width: 500px;
+        }
+        .quiz-option {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text);
+            padding: 16px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            transition: background-color 0.3s, transform 0.2s, border-color 0.3s;
+        }
+        .quiz-option:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+        .quiz-option.correct {
+            background: var(--good);
+            border-color: var(--good);
+            color: white;
+        }
+        .quiz-option.incorrect {
+            background: var(--bad);
+            border-color: var(--bad);
+            color: white;
+        }
+        .quiz-score-container {
+            font-size: 20px;
+            font-weight: 700;
+            text-align: center;
+        }
+        .quiz-controls {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        .quiz-end-message {
+            text-align: center;
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <div class="panel">
+            <header>
+                <div class="brand">
+                    <div class="logo">MG</div>
+                    <div>
+                        <h1>MG WordKart</h1>
+                        <div class="muted">İngilizce ⇄ Türkçe kartlarla öğren</div>
+                    </div>
+                </div>
+                <button id="backBtn" class="btn ghost" style="display:none">← Ana sayfa</button>
+            </header>
+
+            <!-- HOME VIEW -->
+            <section id="home" class="view active">
+                <div class="home-grid">
+                    <div class="card">
+                        <h2 style="margin-top:0">Hangi seviyeden başlamak istersin?</h2>
+                        <div class="level-buttons" id="levelButtons">
+                            <button class="level-button" data-level="A1">A1</button>
+                            <button class="level-button" data-level="A2">A2</button>
+                            <button class="level-button" data-level="B1">B1</button>
+                            <button class="level-button" data-level="B2">B2</button>
+                            <button class="level-button" data-level="C1">C1</button>
+                            <button class="level-button" data-level="C2">C2</button>
+                        </div>
+                        <p class="hint" style="margin-top:12px">İpucu: Space ile çevir, ← / → ile kart değiştir, mobilde sağa/sola kaydır.</p>
+                    </div>
+                    <div class="card">
+                        <h3 style="margin-top:0">Nasıl çalışır?</h3>
+                        <ol>
+                            <li>Hangi seviyeden çalışacağını seç.</li>
+                            <li>Kartın üstüne tıklayarak çevir.</li>
+                            <li>Ses ikonuyla telaffuz dinle (EN/TR).</li>
+                        </ol>
+                        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                            <button id="viewedCardsBtn" class="btn gradient-blue">KAYDEDİLEN KARTLAR</button>
+                            <button id="addCardBtn" class="btn gradient-cyan">YENİ KART EKLE</button>
+                            <button id="aboutBtn" class="btn ghost">HAKKINDA</button>
+                            <button id="contactBtn" class="btn ghost">İLETİŞİM</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- START FLASHCARDS & QUIZ VIEW -->
+            <section id="startFlashcards" class="view">
+                <div class="card">
+                    <h2 style="margin-top:0">Bugün kaç kelime çalışacaksın? <span id="selectedLevelText"></span></h2>
+                    <div class="row">
+                        <span class="muted">Toplam kelime</span>
+                        <span id="totalWords">160</span>
+                    </div>
+                    <div class="row" style="margin-top:16px">
+                        <span class="muted">Seçim (min 5, max toplam)</span>
+                    </div>
+                    <div class="row" style="margin-top:4px">
+                        <input type="range" id="wordCountRange" min="5" max="160" value="5">
+                    </div>
+                    <div class="row" style="margin-top:12px">
+                        <span class="muted">Seçilen</span>
+                        <span class="kpi" id="selectedWordCount">5</span>
+                    </div>
+                    <div style="text-align:center; margin-top:24px; display:flex; flex-wrap:wrap; gap:12px; justify-content:center;">
+                        <button id="startSessionBtn" class="btn primary">Kartlarla Öğren</button>
+                        <button id="startQuizBtn" class="btn gradient-cyan">Sınav Başlat</button>
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- FLASHCARDS VIEW -->
+            <section id="flash" class="view">
+                <div class="topbar">
+                    <div class="muted">Çalışma modu</div>
+                    <div class="counter"><span id="idx">1</span>/<span id="len">1</span></div>
+                </div>
+                <div class="flash-wrap">
+                    <div class="flip-scene" id="scene">
+                        <div class="flip-card" id="card">
+                            <div class="face front">
+                                <div class="word" id="frontWord">Hello</div>
+                                <div class="sentence" id="frontSentence">This is an example sentence.</div>
+                                <div class="speak">
+                                    <button id="speakEN" title="İngilizce telaffuz">🔊 EN</button>
+                                </div>
+                            </div>
+                            <div class="face back">
+                                <div class="word" id="backWord">Merhaba</div>
+                                <div class="sentence" id="backSentence">Bu bir örnek cümledir.</div>
+                                <div class="speak">
+                                    <button id="speakTR" title="Türkçe telaffuz">🔊 TR</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="controls">
+                        <button class="btn ghost" id="prevBtn">⬅ Önceki</button>
+                        <button class="btn primary" id="flipBtn">↻ Çevir</button>
+                        <button class="btn gradient-green" id="saveBtn">✓ Kaydet</button>
+                        <button class="btn ghost" id="nextBtn">Sonraki ➡</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- QUIZ VIEW -->
+            <section id="quiz" class="view">
+                <div class="quiz-container">
+                    <div class="topbar">
+                        <span class="muted">Sınav Modu</span>
+                        <div class="counter"><span id="quiz-idx">1</span>/<span id="quiz-len">1</span></div>
+                    </div>
+                    <div class="quiz-score-container">
+                        Skor: <span id="quiz-score">0</span>
+                    </div>
+                    <div class="card" style="width:100%; max-width:500px">
+                        <div class="quiz-question" id="quiz-question">Merhaba</div>
+                        <div class="speak">
+                             <button id="speakQuizTR" title="Türkçe telaffuz">🔊 TR</button>
+                        </div>
+                    </div>
+                    <div class="quiz-options" id="quiz-options">
+                        <!-- Options will be populated here -->
+                    </div>
+                    <div class="quiz-controls">
+                        <button class="btn primary" id="quiz-next-btn" style="display:none;">Sonraki</button>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- VIEWED CARDS VIEW -->
+            <section id="viewedCards" class="view">
+                <h2 style="margin-top: 0;">Kaydedilen Kartlar</h2>
+                <div id="viewedCardsList" class="word-list">
+                    <!-- Cards will be populated here -->
+                </div>
+            </section>
+            
+            <!-- ADD CARD VIEW -->
+            <section id="addCard" class="view">
+                <h2 style="margin-top: 0;">Yeni Kart Ekle</h2>
+                <form id="addCardForm" class="add-card-form">
+                    <div>
+                        <label for="englishWord">İngilizce Kelime:</label>
+                        <input type="text" id="englishWord" name="englishWord" required>
+                    </div>
+                    <div>
+                        <label for="turkishWord">Türkçe Karşılığı:</label>
+                        <input type="text" id="turkishWord" name="turkishWord" required>
+                    </div>
+                    <!-- Yeni cümle alanları eklendi -->
+                    <div>
+                        <label for="englishSentence">İngilizce Örnek Cümle:</label>
+                        <input type="text" id="englishSentence" name="englishSentence" required>
+                    </div>
+                    <div>
+                        <label for="turkishSentence">Türkçe Örnek Cümle:</label>
+                        <input type="text" id="turkishSentence" name="turkishSentence" required>
+                    </div>
+                    <div>
+                        <label>Seviye:</label>
+                        <div class="level-buttons" id="addCardLevelButtons">
+                            <button type="button" class="level-button active" data-level="A1">A1</button>
+                            <button type="button" class="level-button" data-level="A2">A2</button>
+                            <button type="button" class="level-button" data-level="B1">B1</button>
+                            <button type="button" class="level-button" data-level="B2">B2</button>
+                            <button type="button" class="level-button" data-level="C1">C1</button>
+                            <button type="button" class="level-button" data-level="C2">C2</button>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn primary">Karta Ekle</button>
+                </form>
+                <div id="addCardMessage" class="message"></div>
+            </section>
+
+            <!-- ABOUT VIEW -->
+            <section id="about" class="view">
+                <div class="about-content">
+                    <h2 style="margin-top: 0;">MG WordKart Hakkında</h2>
+                    <p>Bu uygulama, İngilizce kelime bilginizi flaş kartlar aracılığıyla geliştirmek için tasarlanmıştır. Belirlenen kelime sayısını çalışabilir ve daha önce çalıştığınız kelimeleri tekrar gözden geçirebilirsiniz.</p>
+                    <p>Uygulama, yerleşik bir kelime havuzu kullanır ve tarayıcınızın sesli okuma özelliğini kullanarak kelimelerin telaffuzunu dinlemenize olanak tanır.</p>
+                </div>
+                <div class="about-footer">
+                    MG STUDIOS
+                </div>
+            </section>
+
+            <!-- YENİ İLETİŞİM SAYFASI EKLENDİ -->
+            <section id="contact" class="view">
+                <div class="about-content">
+                    <h2 style="margin-top: 0;">İletişim</h2>
+                    <p>Uygulama ile ilgili görüş, öneri veya geri bildirimleriniz için bize ulaşabilirsiniz.</p>
+                    <p>E-posta: <a href="mailto:info@mgstudios.com" style="color:var(--accent); text-decoration:none;">info@mgstudios.com</a></p>
+                    <p>Uygulamayı tercih ettiğiniz için teşekkür ederiz!</p>
+                </div>
+                <div class="about-footer">
+                    MG STUDIOS
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        // ———————————— DATA ————————————
+        // Kullanıcının sağladığı liste ve örnek cümleler ile güncellenmiş kelime havuzu.
+        const ALL_WORDS = [
+    {
+        "en": "Client",
+        "tr": "müşteri",
+        "level": "A1",
+        "enSentence": "The client approved the final design.",
+        "trSentence": "Müşteri, son tasarımı onayladı."
+    },
+    {
+        "en": "Hired",
+        "tr": "işe alındı",
+        "level": "A1",
+        "enSentence": "She was hired for the new position.",
+        "trSentence": "Yeni pozisyon için işe alındı."
+    },
+    {
+        "en": "Behave",
+        "tr": "davranmak",
+        "level": "A1",
+        "enSentence": "You must behave yourself at the party.",
+        "trSentence": "Partide düzgün davranmalısın."
+    },
+    {
+        "en": "Borrow",
+        "tr": "ödünç almak",
+        "level": "A1",
+        "enSentence": "Can I borrow your book?",
+        "trSentence": "Kitabını ödünç alabilir miyim?"
+    },
+    {
+        "en": "Shout",
+        "tr": "haykırmak",
+        "level": "A1",
+        "enSentence": "Please don't shout at me.",
+        "trSentence": "Lütfen bana bağırma."
+    },
+    {
+        "en": "Kick",
+        "tr": "tekmelemek",
+        "level": "A1",
+        "enSentence": "The boy started to kick the ball.",
+        "trSentence": "Çocuk topa tekme atmaya başladı."
+    },
+    {
+        "en": "Light",
+        "tr": "hafif",
+        "level": "A1",
+        "enSentence": "The package was very light.",
+        "trSentence": "Paket çok hafifti."
+    },
+    {
+        "en": "Whole",
+        "tr": "bütün",
+        "level": "A1",
+        "enSentence": "He ate the whole cake.",
+        "trSentence": "Pastanın tamamını yedi."
+    },
+    {
+        "en": "Roof",
+        "tr": "çatı",
+        "level": "A1",
+        "enSentence": "The cat is on the roof.",
+        "trSentence": "Kedi çatıda."
+    },
+    {
+        "en": "Toe",
+        "tr": "ayak parmağı",
+        "level": "A1",
+        "enSentence": "He stubbed his toe on the table leg.",
+        "trSentence": "Ayak parmağını masanın ayağına çarptı."
+    },
+    {
+        "en": "Mall",
+        "tr": "AVM",
+        "level": "A1",
+        "enSentence": "Let's go to the mall this weekend.",
+        "trSentence": "Bu hafta sonu AVM'ye gidelim."
+    },
+    {
+        "en": "Tall",
+        "tr": "uzun, uzun boylu",
+        "level": "A1",
+        "enSentence": "He is a very tall man.",
+        "trSentence": "O çok uzun boylu bir adam."
+    },
+    {
+        "en": "Cross",
+        "tr": "geçmek",
+        "level": "A1",
+        "enSentence": "Be careful when you cross the road.",
+        "trSentence": "Yolu geçerken dikkatli ol."
+    },
+    {
+        "en": "Carrying",
+        "tr": "taşımak",
+        "level": "A1",
+        "enSentence": "She is carrying a heavy bag.",
+        "trSentence": "Ağır bir çanta taşıyor."
+    },
+    {
+        "en": "Elevator",
+        "tr": "asansör",
+        "level": "A1",
+        "enSentence": "We took the elevator to the 10th floor.",
+        "trSentence": "10. kata asansörle çıktık."
+    },
+    {
+        "en": "Promotion",
+        "tr": "terfi",
+        "level": "A2",
+        "enSentence": "She got a promotion at work.",
+        "trSentence": "İş yerinde terfi aldı."
+    },
+    {
+        "en": "Downsize",
+        "tr": "küçülmek",
+        "level": "A2",
+        "enSentence": "The company decided to downsize its workforce.",
+        "trSentence": "Şirket iş gücünü küçültmeye karar verdi."
+    },
+    {
+        "en": "Scold",
+        "tr": "sitem",
+        "level": "A2",
+        "enSentence": "His mother would scold him for his poor grades.",
+        "trSentence": "Annesi, kötü notları için ona sitem ederdi."
+    },
+    {
+        "en": "Lecture",
+        "tr": "ders / eleştiri",
+        "level": "A2",
+        "enSentence": "The professor gave a lecture on ancient history.",
+        "trSentence": "Profesör, eski tarih hakkında bir ders verdi."
+    },
+    {
+        "en": "Silently",
+        "tr": "sessizce",
+        "level": "A2",
+        "enSentence": "He walked silently into the room.",
+        "trSentence": "Sessizce odaya girdi."
+    },
+    {
+        "en": "Instead",
+        "tr": "başka bir şey yerine",
+        "level": "A2",
+        "enSentence": "I will have water instead of juice.",
+        "trSentence": "Meyve suyu yerine su içeceğim."
+    },
+    {
+        "en": "Toward",
+        "tr": "doğru",
+        "level": "A2",
+        "enSentence": "He walked toward the school.",
+        "trSentence": "Okula doğru yürüdü."
+    },
+    {
+        "en": "Covered",
+        "tr": "kapalı",
+        "level": "A2",
+        "enSentence": "The ground was covered with snow.",
+        "trSentence": "Yer karla kaplıydı."
+    },
+    {
+        "en": "Lifted",
+        "tr": "kaldırmak",
+        "level": "A2",
+        "enSentence": "She lifted the heavy box with both hands.",
+        "trSentence": "Ağır kutuyu iki eliyle kaldırdı."
+    },
+    {
+        "en": "Stuck",
+        "tr": "sıkışmak",
+        "level": "A2",
+        "enSentence": "The car got stuck in the mud.",
+        "trSentence": "Araba çamura saplandı."
+    },
+    {
+        "en": "Distance",
+        "tr": "mesafe",
+        "level": "A2",
+        "enSentence": "I can see the car in the distance.",
+        "trSentence": "Uzaktaki arabayı görebiliyorum."
+    },
+    {
+        "en": "Relax",
+        "tr": "rahatlamak",
+        "level": "A2",
+        "enSentence": "Take a deep breath and relax.",
+        "trSentence": "Derin bir nefes al ve rahatla."
+    },
+    {
+        "en": "Tiny",
+        "tr": "küçücük",
+        "level": "A2",
+        "enSentence": "The baby has tiny hands.",
+        "trSentence": "Bebeğin küçücük elleri var."
+    },
+    {
+        "en": "Stomachache",
+        "tr": "karın ağrısı",
+        "level": "A2",
+        "enSentence": "I have a terrible stomachache.",
+        "trSentence": "Korkunç bir karın ağrım var."
+    },
+    {
+        "en": "Thirsty",
+        "tr": "susamış",
+        "level": "A2",
+        "enSentence": "I'm so thirsty, I need a glass of water.",
+        "trSentence": "Çok susadım, bir bardak suya ihtiyacım var."
+    },
+    {
+        "en": "Straight",
+        "tr": "düz",
+        "level": "A2",
+        "enSentence": "The road goes straight ahead.",
+        "trSentence": "Yol dosdoğru ilerliyor."
+    },
+    {
+        "en": "Attractive",
+        "tr": "çekici",
+        "level": "A2",
+        "enSentence": "She wore a very attractive dress to the party.",
+        "trSentence": "Partiye çok çekici bir elbise giydi."
+    },
+    {
+        "en": "Hurry",
+        "tr": "acele etmek",
+        "level": "A2",
+        "enSentence": "You need to hurry, the bus is leaving.",
+        "trSentence": "Acele etmelisin, otobüs kalkıyor."
+    },
+    {
+        "en": "Context",
+        "tr": "bağlam",
+        "level": "B1",
+        "enSentence": "You must understand the context of the sentence.",
+        "trSentence": "Cümlenin bağlamını anlamalısın."
+    },
+    {
+        "en": "Conditional",
+        "tr": "koşullu",
+        "level": "B1",
+        "enSentence": "The offer is conditional on your acceptance.",
+        "trSentence": "Teklif, kabul etmene bağlıdır."
+    },
+    {
+        "en": "Individual",
+        "tr": "bireysel",
+        "level": "B1",
+        "enSentence": "Each individual has a different opinion.",
+        "trSentence": "Her bireyin farklı bir fikri vardır."
+    },
+    {
+        "en": "Notice",
+        "tr": "algılamak",
+        "level": "B1",
+        "enSentence": "Did you notice the new painting on the wall?",
+        "trSentence": "Duvardaki yeni tabloyu fark ettin mi?"
+    },
+    {
+        "en": "Roughly",
+        "tr": "kabaca / yaklaşık",
+        "level": "B1",
+        "enSentence": "The project will take roughly two weeks.",
+        "trSentence": "Proje kabaca iki hafta sürecek."
+    },
+    {
+        "en": "Confuse",
+        "tr": "kafası karışmak",
+        "level": "B1",
+        "enSentence": "The similar names can confuse people.",
+        "trSentence": "Benzer isimler insanların kafasını karıştırabilir."
+    },
+    {
+        "en": "Pile",
+        "tr": "yığın",
+        "level": "B1",
+        "enSentence": "There was a pile of books on the floor.",
+        "trSentence": "Yerde bir kitap yığını vardı."
+    },
+    {
+        "en": "Interrupt",
+        "tr": "kesintiye uğramak",
+        "level": "B1",
+        "enSentence": "Please don't interrupt me while I'm speaking.",
+        "trSentence": "Konuşurken lütfen sözümü kesme."
+    },
+    {
+        "en": "Disappear",
+        "tr": "yok olmak",
+        "level": "B1",
+        "enSentence": "The magician made the rabbit disappear.",
+        "trSentence": "Sihirbaz tavşanı yok etti."
+    },
+    {
+        "en": "Discuss",
+        "tr": "tartışmak",
+        "level": "B1",
+        "enSentence": "We need to discuss this issue in the meeting.",
+        "trSentence": "Bu konuyu toplantıda tartışmalıyız."
+    },
+    {
+        "en": "Tie",
+        "tr": "bağlamak",
+        "level": "B1",
+        "enSentence": "He tied his shoes before going out.",
+        "trSentence": "Dışarı çıkmadan önce ayakkabılarını bağladı."
+    },
+    {
+        "en": "Earn",
+        "tr": "para kazanmak",
+        "level": "B1",
+        "enSentence": "He wants to earn more money to buy a car.",
+        "trSentence": "Bir araba almak için daha fazla para kazanmak istiyor."
+    },
+    {
+        "en": "Trick",
+        "tr": "hile",
+        "level": "B1",
+        "enSentence": "The magician's trick was amazing.",
+        "trSentence": "Sihirbazın hilesi harikaydı."
+    },
+    {
+        "en": "Attention",
+        "tr": "dikkat",
+        "level": "B1",
+        "enSentence": "Please pay attention to the instructions.",
+        "trSentence": "Lütfen talimatlara dikkat edin."
+    },
+    {
+        "en": "Recognize",
+        "tr": "tanımak, bilmek",
+        "level": "B1",
+        "enSentence": "I didn't recognize her with her new hairstyle.",
+        "trSentence": "Yeni saç stiliyle onu tanıyamadım."
+    },
+    {
+        "en": "Nervously",
+        "tr": "sinirli / tedirgin şekilde",
+        "level": "B1",
+        "enSentence": "He nervously looked at his watch.",
+        "trSentence": "Gergin bir şekilde saatine baktı."
+    },
+    {
+        "en": "Several",
+        "tr": "birkaç",
+        "level": "B1",
+        "enSentence": "I have several books to read.",
+        "trSentence": "Okunacak birkaç kitabım var."
+    },
+    {
+        "en": "Apologize",
+        "tr": "özür dilemek",
+        "level": "B1",
+        "enSentence": "You should apologize for being late.",
+        "trSentence": "Geç kaldığın için özür dilemelisin."
+    },
+    {
+        "en": "Complain",
+        "tr": "şikayet etmek",
+        "level": "B1",
+        "enSentence": "He always complains about the food.",
+        "trSentence": "Yemeklerden her zaman şikayet eder."
+    },
+    {
+        "en": "Check out",
+        "tr": "çıkış yapmak",
+        "level": "B1",
+        "enSentence": "We need to check out of the hotel by noon.",
+        "trSentence": "Otelden öğlene kadar çıkış yapmamız gerekiyor."
+    },
+    {
+        "en": "Hang",
+        "tr": "asmak",
+        "level": "B1",
+        "enSentence": "Please hang your coat in the closet.",
+        "trSentence": "Lütfen montunu dolaba as."
+    },
+    {
+        "en": "Hug",
+        "tr": "sarılmak",
+        "level": "B1",
+        "enSentence": "She gave her mother a big hug.",
+        "trSentence": "Annesine kocaman bir sarılma verdi."
+    },
+    {
+        "en": "Bite",
+        "tr": "ısırmak",
+        "level": "B1",
+        "enSentence": "The dog might bite if you disturb it.",
+        "trSentence": "Rahatsız edersen köpek ısırabilir."
+    },
+    {
+        "en": "Burn",
+        "tr": "yakmak",
+        "level": "B1",
+        "enSentence": "Be careful not to burn the toast.",
+        "trSentence": "Tostu yakmamaya dikkat et."
+    },
+    {
+        "en": "Fold",
+        "tr": "katlamak",
+        "level": "B1",
+        "enSentence": "Please fold the laundry and put it away.",
+        "trSentence": "Lütfen çamaşırları katla ve kaldır."
+    },
+    {
+        "en": "Distance",
+        "tr": "mesafe",
+        "level": "B1",
+        "enSentence": "The distance between the two cities is 50 kilometers.",
+        "trSentence": "İki şehir arasındaki mesafe 50 kilometredir."
+    },
+    {
+        "en": "bright",
+        "tr": "parlak",
+        "level": "B1",
+        "enSentence": "The sun is very bright today.",
+        "trSentence": "Bugün güneş çok parlak."
+    },
+    {
+        "en": "bulb",
+        "tr": "ampul",
+        "level": "B1",
+        "enSentence": "I need to change the light bulb.",
+        "trSentence": "Ampulü değiştirmem gerekiyor."
+    },
+    {
+        "en": "burglar",
+        "tr": "hırsız (ev soyan hırsız)",
+        "level": "B1",
+        "enSentence": "A burglar broke into the house last night.",
+        "trSentence": "Dün gece eve bir hırsız girdi."
+    },
+    {
+        "en": "calm",
+        "tr": "sakin",
+        "level": "B1",
+        "enSentence": "She remained calm during the crisis.",
+        "trSentence": "Kriz sırasında sakin kaldı."
+    },
+    {
+        "en": "cancel",
+        "tr": "iptal",
+        "level": "B1",
+        "enSentence": "We had to cancel our flight.",
+        "trSentence": "Uçuşumuzu iptal etmek zorunda kaldık."
+    },
+    {
+        "en": "certain",
+        "tr": "kesin, belli",
+        "level": "B1",
+        "enSentence": "Are you certain about the date?",
+        "trSentence": "Tarih konusunda emin misin?"
+    },
+    {
+        "en": "citizen",
+        "tr": "vatandaş",
+        "level": "B1",
+        "enSentence": "Every citizen has the right to vote.",
+        "trSentence": "Her vatandaşın oy kullanma hakkı vardır."
+    },
+    {
+        "en": "coach",
+        "tr": "antrenör",
+        "level": "B1",
+        "enSentence": "The soccer coach trained the team well.",
+        "trSentence": "Futbol antrenörü takımı iyi eğitti."
+    },
+    {
+        "en": "coast",
+        "tr": "sahil",
+        "level": "B1",
+        "enSentence": "We walked along the coast.",
+        "trSentence": "Sahil boyunca yürüdük."
+    },
+    {
+        "en": "coin",
+        "tr": "bozuk para, sikke",
+        "level": "B1",
+        "enSentence": "He flipped a coin to decide.",
+        "trSentence": "Karar vermek için yazı tura attı."
+    },
+    {
+        "en": "comb",
+        "tr": "tarak",
+        "level": "B1",
+        "enSentence": "She used a comb to fix her hair.",
+        "trSentence": "Saçını düzeltmek için bir tarak kullandı."
+    },
+    {
+        "en": "common",
+        "tr": "ortak, yaygın",
+        "level": "B1",
+        "enSentence": "This is a common mistake.",
+        "trSentence": "Bu yaygın bir hatadır."
+    },
+    {
+        "en": "communicate",
+        "tr": "iletişim kurmak",
+        "level": "B1",
+        "enSentence": "It's important to communicate clearly.",
+        "trSentence": "Açıkça iletişim kurmak önemlidir."
+    },
+    {
+        "en": "compare",
+        "tr": "karşılaştırmak",
+        "level": "B1",
+        "enSentence": "I compared the two phones before buying.",
+        "trSentence": "Satın almadan önce iki telefonu karşılaştırdım."
+    },
+    {
+        "en": "complain",
+        "tr": "şikayet",
+        "level": "B1",
+        "enSentence": "He complained about the slow service.",
+        "trSentence": "Yavaş hizmetten şikayet etti."
+    },
+    {
+        "en": "connected flight",
+        "tr": "bağlı uçuş",
+        "level": "B1",
+        "enSentence": "We have a connected flight in London.",
+        "trSentence": "Londra'da aktarmalı uçuşumuz var."
+    },
+    {
+        "en": "consist",
+        "tr": "oluşmak, meydana gelmek",
+        "level": "B1",
+        "enSentence": "The team consists of five people.",
+        "trSentence": "Takım beş kişiden oluşuyor."
+    },
+    {
+        "en": "contain",
+        "tr": "içermek",
+        "level": "B1",
+        "enSentence": "This box contains old photographs.",
+        "trSentence": "Bu kutu eski fotoğrafları içeriyor."
+    },
+    {
+        "en": "convince",
+        "tr": "ikna etmek",
+        "level": "B1",
+        "enSentence": "I tried to convince him to join us.",
+        "trSentence": "Onu bize katılması için ikna etmeye çalıştım."
+    },
+    {
+        "en": "count",
+        "tr": "saymak",
+        "level": "B1",
+        "enSentence": "Can you count to ten?",
+        "trSentence": "Ona kadar sayabilir misin?"
+    },
+    {
+        "en": "crime",
+        "tr": "suç",
+        "level": "B1",
+        "enSentence": "Police are investigating the crime.",
+        "trSentence": "Polis suçu araştırıyor."
+    },
+    {
+        "en": "criticize",
+        "tr": "eleştirmek",
+        "level": "B1",
+        "enSentence": "Don't criticize her for her choices.",
+        "trSentence": "Seçimleri için onu eleştirme."
+    },
+    {
+        "en": "curtain",
+        "tr": "perde",
+        "level": "B1",
+        "enSentence": "Please close the curtains.",
+        "trSentence": "Lütfen perdeleri kapatın."
+    },
+    {
+        "en": "death",
+        "tr": "ölüm",
+        "level": "B1",
+        "enSentence": "The news of his death shocked everyone.",
+        "trSentence": "Ölüm haberi herkesi şok etti."
+    },
+    {
+        "en": "decrease",
+        "tr": "azaltmak",
+        "level": "B1",
+        "enSentence": "We need to decrease our spending.",
+        "trSentence": "Harcamalarımızı azaltmamız gerekiyor."
+    },
+    {
+        "en": "defend",
+        "tr": "savunmak",
+        "level": "B1",
+        "enSentence": "She defended her argument bravely.",
+        "trSentence": "Savunduğu argümanı cesurca savundu."
+    },
+    {
+        "en": "departure gate",
+        "tr": "kalkış kapısı",
+        "level": "B1",
+        "enSentence": "The departure gate is number 12.",
+        "trSentence": "Kalkış kapısı 12 numara."
+    },
+    {
+        "en": "destination",
+        "tr": "hedef",
+        "level": "B1",
+        "enSentence": "What is your final destination?",
+        "trSentence": "Son varış noktanız neresi?"
+    },
+    {
+        "en": "destroy",
+        "tr": "yıkmak, mahvetmek",
+        "level": "B1",
+        "enSentence": "The storm destroyed the old building.",
+        "trSentence": "Fırtına eski binayı yıktı."
+    },
+    {
+        "en": "detail",
+        "tr": "detay",
+        "level": "B1",
+        "enSentence": "Please explain every detail.",
+        "trSentence": "Lütfen her detayı açıklayın."
+    },
+    {
+        "en": "development",
+        "tr": "geliştirmek",
+        "level": "B1",
+        "enSentence": "The company focuses on product development.",
+        "trSentence": "Şirket, ürün geliştirmeye odaklanıyor."
+    },
+    {
+        "en": "disagree",
+        "tr": "katılmamak",
+        "level": "B1",
+        "enSentence": "I have to disagree with you on this point.",
+        "trSentence": "Bu konuda sana katılmak zorundayım."
+    },
+    {
+        "en": "discount",
+        "tr": "indirim",
+        "level": "B1",
+        "enSentence": "They are offering a 10% discount.",
+        "trSentence": "%10 indirim yapıyorlar."
+    },
+    {
+        "en": "disease",
+        "tr": "hastalık",
+        "level": "B1",
+        "enSentence": "The doctor is researching a rare disease.",
+        "trSentence": "Doktor nadir bir hastalığı araştırıyor."
+    },
+    {
+        "en": "dive",
+        "tr": "dalış",
+        "level": "B1",
+        "enSentence": "He likes to dive in the ocean.",
+        "trSentence": "Okyanusta dalış yapmayı sever."
+    },
+    {
+        "en": "divide",
+        "tr": "bölmek",
+        "level": "B1",
+        "enSentence": "Let's divide the cake into equal pieces.",
+        "trSentence": "Pastayı eşit parçalara bölelim."
+    },
+    {
+        "en": "domestic flight",
+        "tr": "iç hatlar uçuşu",
+        "level": "B1",
+        "enSentence": "This is a domestic flight.",
+        "trSentence": "Bu bir iç hatlar uçuşu."
+    },
+    {
+        "en": "drop",
+        "tr": "damla, damlamak",
+        "level": "B1",
+        "enSentence": "A drop of water fell on the paper.",
+        "trSentence": "Kağıdın üzerine bir damla su düştü."
+    },
+    {
+        "en": "drug",
+        "tr": "ilaç",
+        "level": "B1",
+        "enSentence": "This drug is used to treat headaches.",
+        "trSentence": "Bu ilaç baş ağrısını tedavi etmek için kullanılır."
+    },
+    {
+        "en": "dry",
+        "tr": "kuru",
+        "level": "B1",
+        "enSentence": "The clothes are now dry.",
+        "trSentence": "Giysiler şimdi kuru."
+    },
+    {
+        "en": "duty",
+        "tr": "görev",
+        "level": "B1",
+        "enSentence": "It is my duty to help others.",
+        "trSentence": "Başkalarına yardım etmek benim görevim."
+    },
+    {
+        "en": "Scolded",
+        "tr": "azarlamak",
+        "level": "B2",
+        "enSentence": "The teacher scolded the students for being noisy.",
+        "trSentence": "Öğretmen, gürültü yaptıkları için öğrencileri azarladı."
+    },
+    {
+        "en": "Drag",
+        "tr": "sürüklemek",
+        "level": "B2",
+        "enSentence": "He had to drag the heavy box across the floor.",
+        "trSentence": "Ağır kutuyu yer boyunca sürüklemek zorunda kaldı."
+    },
+    {
+        "en": "Exchange looks with",
+        "tr": "bakışmak",
+        "level": "B2",
+        "enSentence": "They exchanged looks of surprise.",
+        "trSentence": "Şaşkınlıkla bakıştılar."
+    },
+    {
+        "en": "Flame-thrower",
+        "tr": "alev makinesi",
+        "level": "B2",
+        "enSentence": "The soldiers used a flame-thrower to clear the area.",
+        "trSentence": "Askerler, alanı temizlemek için alev makinesi kullandı."
+    },
+    {
+        "en": "Blew",
+        "tr": "patlamak / üflemek",
+        "level": "B2",
+        "enSentence": "The wind blew the leaves off the trees.",
+        "trSentence": "Rüzgar, yaprakları ağaçlardan uçurdu."
+    },
+    {
+        "en": "Agreement",
+        "tr": "anlaşma",
+        "level": "B2",
+        "enSentence": "They reached an agreement after a long discussion.",
+        "trSentence": "Uzun bir tartışmadan sonra bir anlaşmaya vardılar."
+    },
+    {
+        "en": "Arranged",
+        "tr": "planlanmış",
+        "level": "B2",
+        "enSentence": "We arranged a meeting for next week.",
+        "trSentence": "Gelecek hafta için bir toplantı planladık."
+    },
+    {
+        "en": "Defeat",
+        "tr": "yenmek",
+        "level": "B2",
+        "enSentence": "Our team was defeated in the final match.",
+        "trSentence": "Takımımız final maçında yenildi."
+    },
+    {
+        "en": "Improve",
+        "tr": "geliştirmek / iyileştirmek",
+        "level": "B2",
+        "enSentence": "She wants to improve her English skills.",
+        "trSentence": "İngilizce becerilerini geliştirmek istiyor."
+    },
+    {
+        "en": "Merchant",
+        "tr": "tüccar",
+        "level": "B2",
+        "enSentence": "The merchant sold spices and silk.",
+        "trSentence": "Tüccar baharat ve ipek sattı."
+    },
+    {
+        "en": "Insist",
+        "tr": "ısrar etmek",
+        "level": "B2",
+        "enSentence": "He insisted on paying for dinner.",
+        "trSentence": "Akşam yemeğinin parasını ödemekte ısrar etti."
+    },
+    {
+        "en": "Harbor",
+        "tr": "liman",
+        "level": "B2",
+        "enSentence": "The ships are anchored in the harbor.",
+        "trSentence": "Gemiler limanda demirlemiş."
+    },
+    {
+        "en": "Attitude",
+        "tr": "tavır",
+        "level": "B2",
+        "enSentence": "She has a positive attitude towards life.",
+        "trSentence": "Hayata karşı olumlu bir tavrı var."
+    },
+    {
+        "en": "Opinion",
+        "tr": "fikir / görüş",
+        "level": "B2",
+        "enSentence": "What is your opinion on this matter?",
+        "trSentence": "Bu konuda fikriniz nedir?"
+    },
+    {
+        "en": "Apology",
+        "tr": "özür",
+        "level": "B2",
+        "enSentence": "He owes her an apology.",
+        "trSentence": "Ona bir özür borçlu."
+    },
+    {
+        "en": "Proud",
+        "tr": "gururlu",
+        "level": "B2",
+        "enSentence": "She was proud of her daughter's success.",
+        "trSentence": "Kızının başarısıyla gurur duydu."
+    },
+    {
+        "en": "Defect",
+        "tr": "kusur",
+        "level": "B2",
+        "enSentence": "The product was returned due to a minor defect.",
+        "trSentence": "Ürün, küçük bir kusur nedeniyle iade edildi."
+    },
+    {
+        "en": "Slander",
+        "tr": "iftira",
+        "level": "B2",
+        "enSentence": "He sued the newspaper for slander.",
+        "trSentence": "İftira nedeniyle gazeteye dava açtı."
+    },
+    {
+        "en": "Cost",
+        "tr": "maliyet",
+        "level": "B2",
+        "enSentence": "The cost of living has increased.",
+        "trSentence": "Yaşam maliyeti arttı."
+    },
+    {
+        "en": "Discount",
+        "tr": "indirim",
+        "level": "B2",
+        "enSentence": "I got a 20% discount on the shoes.",
+        "trSentence": "Ayakkabılarda %20 indirim aldım."
+    },
+    {
+        "en": "Capital",
+        "tr": "başkent",
+        "level": "B2",
+        "enSentence": "Ankara is the capital of Turkey.",
+        "trSentence": "Ankara, Türkiye'nin başkentidir."
+    },
+    {
+        "en": "Dock",
+        "tr": "rıhtım",
+        "level": "B2",
+        "enSentence": "The ship is at the dock.",
+        "trSentence": "Gemi rıhtımda."
+    },
+    {
+        "en": "Stir",
+        "tr": "karıştırmak",
+        "level": "B2",
+        "enSentence": "Stir the soup until it's smooth.",
+        "trSentence": "Çorba pürüzsüz olana kadar karıştırın."
+    },
+    {
+        "en": "Pronounce",
+        "tr": "telaffuz etmek",
+        "level": "B2",
+        "enSentence": "Can you pronounce this word for me?",
+        "trSentence": "Bu kelimeyi benim için telaffuz edebilir misin?"
+    },
+    {
+        "en": "Extrude",
+        "tr": "dışarı çıkarmak, uzatmak",
+        "level": "C1",
+        "enSentence": "The machine can extrude plastic into different shapes.",
+        "trSentence": "Makine, plastiği farklı şekillerde dışarı çıkarabilir."
+    },
+    {
+        "en": "Obligation",
+        "tr": "gerektirmek",
+        "level": "C1",
+        "enSentence": "You have an obligation to help your family.",
+        "trSentence": "Ailene yardım etme yükümlülüğün var."
+    },
+    {
+        "en": "Efficient",
+        "tr": "verimli",
+        "level": "C1",
+        "enSentence": "The new system is more efficient.",
+        "trSentence": "Yeni sistem daha verimli."
+    },
+    {
+        "en": "Influence",
+        "tr": "etkilemek / etki",
+        "level": "C1",
+        "enSentence": "Her parents had a strong influence on her career.",
+        "trSentence": "Ailesi, kariyeri üzerinde güçlü bir etkiye sahipti."
+    },
+    {
+        "en": "Maintain",
+        "tr": "sürdürmek",
+        "level": "C1",
+        "enSentence": "It is important to maintain a healthy lifestyle.",
+        "trSentence": "Sağlıklı bir yaşam tarzını sürdürmek önemlidir."
+    },
+    {
+        "en": "Avoid",
+        "tr": "kaçınmak",
+        "level": "C1",
+        "enSentence": "You should avoid eating too much sugar.",
+        "trSentence": "Çok fazla şeker yemekten kaçınmalısın."
+    },
+    {
+        "en": "Prevent",
+        "tr": "önlemek",
+        "level": "C1",
+        "enSentence": "Wearing a helmet can prevent serious injuries.",
+        "trSentence": "Kask takmak ciddi yaralanmaları önleyebilir."
+    },
+    {
+        "en": "Specific",
+        "tr": "belirli",
+        "level": "C1",
+        "enSentence": "Please give me specific instructions.",
+        "trSentence": "Lütfen bana belirli talimatlar verin."
+    },
+    {
+        "en": "Environment",
+        "tr": "çevre",
+        "level": "C1",
+        "enSentence": "We must protect our environment.",
+        "trSentence": "Çevremizi korumalıyız."
+    },
+    {
+        "en": "Explorer",
+        "tr": "kaşif / sefer",
+        "level": "C1",
+        "enSentence": "An explorer discovered a new continent.",
+        "trSentence": "Bir kaşif yeni bir kıta keşfetti."
+    },
+    {
+        "en": "Ruin",
+        "tr": "kalıntı",
+        "level": "C1",
+        "enSentence": "The old castle is now a beautiful ruin.",
+        "trSentence": "Eski kale şimdi güzel bir kalıntı."
+    },
+    {
+        "en": "Patient",
+        "tr": "sabırlı",
+        "level": "C1",
+        "enSentence": "You have to be patient to learn a new language.",
+        "trSentence": "Yeni bir dil öğrenmek için sabırlı olmalısın."
+    },
+    {
+        "en": "Disturbance",
+        "tr": "rahatsızlık",
+        "level": "C1",
+        "enSentence": "He was fined for causing a public disturbance.",
+        "trSentence": "Halkı rahatsız etmekten dolayı para cezasına çarptırıldı."
+    },
+    {
+        "en": "Epidemic",
+        "tr": "salgın",
+        "level": "C1",
+        "enSentence": "The city is fighting an epidemic.",
+        "trSentence": "Şehir bir salgınla mücadele ediyor."
+    },
+    {
+        "en": "Essay",
+        "tr": "deneme",
+        "level": "C1",
+        "enSentence": "I need to write an essay on a historical topic.",
+        "trSentence": "Tarihi bir konu hakkında bir deneme yazmam gerekiyor."
+    },
+    {
+        "en": "Dungeon",
+        "tr": "zindan",
+        "level": "C1",
+        "enSentence": "The prisoner was kept in the dark dungeon.",
+        "trSentence": "Mahkum karanlık zindanda tutuldu."
+    },
+    {
+        "en": "Fountain",
+        "tr": "fıskiye",
+        "level": "C1",
+        "enSentence": "There is a beautiful fountain in the park.",
+        "trSentence": "Parkta güzel bir fıskiye var."
+    },
+    {
+        "en": "Tailor",
+        "tr": "terzi",
+        "level": "C1",
+        "enSentence": "I will take my suit to the tailor to be fixed.",
+        "trSentence": "Takım elbisemi tamir ettirmek için terziye götüreceğim."
+    },
+    {
+        "en": "Tiny",
+        "tr": "küçücük",
+        "level": "C1",
+        "enSentence": "A tiny spider crawled up the wall.",
+        "trSentence": "Küçücük bir örümcek duvarda süründü."
+    },
+    {
+        "en": "Examine",
+        "tr": "incelemek, muayene etmek",
+        "level": "C2",
+        "enSentence": "The doctor will examine you tomorrow.",
+        "trSentence": "Doktor sizi yarın muayene edecek."
+    },
+    {
+        "en": "Commanded",
+        "tr": "emretmek, komuta etmek",
+        "level": "C2",
+        "enSentence": "The general commanded his troops to attack.",
+        "trSentence": "General, askerlerine saldırı emri verdi."
+    },
+    {
+        "en": "Mind",
+        "tr": "zihin",
+        "level": "C2",
+        "enSentence": "He has a very sharp mind.",
+        "trSentence": "Çok keskin bir zihni var."
+    },
+    {
+        "en": "Quill",
+        "tr": "Quill (isim)",
+        "level": "C2",
+        "enSentence": "The author wrote with a feather quill.",
+        "trSentence": "Yazar, tüy kalemle yazdı."
+    },
+    {
+        "en": "Pentagon",
+        "tr": "beşgen",
+        "level": "C2",
+        "enSentence": "The building is in the shape of a pentagon.",
+        "trSentence": "Bina beşgen şeklindedir."
+    },
+    {
+        "en": "Invention",
+        "tr": "icat",
+        "level": "C2",
+        "enSentence": "The invention of the telephone revolutionized communication.",
+        "trSentence": "Telefonun icadı iletişimi kökten değiştirdi."
+    },
+    {
+        "en": "Consider",
+        "tr": "düşünmek, dikkate almak",
+        "level": "C2",
+        "enSentence": "Please consider my proposal.",
+        "trSentence": "Lütfen teklifimi düşünün."
+    },
+    {
+        "en": "Challenge",
+        "tr": "zorluk, meydan okuma",
+        "level": "C2",
+        "enSentence": "This new project is a big challenge for me.",
+        "trSentence": "Bu yeni proje benim için büyük bir meydan okuma."
+    },
+    {
+        "en": "Reliable",
+        "tr": "güvenilir",
+        "level": "C2",
+        "enSentence": "He is a reliable friend.",
+        "trSentence": "O, güvenilir bir arkadaş."
+    },
+    {
+        "en": "Encourage",
+        "tr": "teşvik etmek",
+        "level": "C2",
+        "enSentence": "My teacher encouraged me to study harder.",
+        "trSentence": "Öğretmenim beni daha sıkı çalışmaya teşvik etti."
+    },
+    {
+        "en": "Compare",
+        "tr": "karşılaştırmak",
+        "level": "C2",
+        "enSentence": "You shouldn't compare yourself to others.",
+        "trSentence": "Kendini başkalarıyla karşılaştırmamalısın."
+    },
+    {
+        "en": "Claim",
+        "tr": "iddia etmek",
+        "level": "C2",
+        "enSentence": "He claims to be the best player.",
+        "trSentence": "En iyi oyuncu olduğunu iddia ediyor."
+    },
+    {
+        "en": "Suggest",
+        "tr": "önermek",
+        "level": "C2",
+        "enSentence": "I suggest we go for a walk.",
+        "trSentence": "Yürüyüşe çıkmamızı öneriyorum."
+    },
+    {
+        "en": "Deal with",
+        "tr": "ilgilenmek, başa çıkmak",
+        "level": "C2",
+        "enSentence": "I can deal with this problem.",
+        "trSentence": "Bu sorunla başa çıkabilirim."
+    },
+    {
+        "en": "Appear",
+        "tr": "görünmek",
+        "level": "C2",
+        "enSentence": "She appeared to be very tired.",
+        "trSentence": "Çok yorgun görünüyordu."
+    },
+    {
+        "en": "Achieve",
+        "tr": "başarmak",
+        "level": "C2",
+        "enSentence": "You can achieve anything you set your mind to.",
+        "trSentence": "Aklına koyduğun her şeyi başarabilirsin."
+    },
+    {
+        "en": "Purpose",
+        "tr": "amaç",
+        "level": "C2",
+        "enSentence": "What is the purpose of this meeting?",
+        "trSentence": "Bu toplantının amacı nedir?"
+    },
+    {
+        "en": "Available",
+        "tr": "mevcut, ulaşılabilir",
+        "level": "C2",
+        "enSentence": "Are you available for a meeting tomorrow?",
+        "trSentence": "Yarın bir toplantı için müsait misin?"
+    },
+    {
+        "en": "Necessary",
+        "tr": "gerekli",
+        "level": "C2",
+        "enSentence": "It is necessary to wear a mask in public.",
+        "trSentence": "Halka açık alanda maske takmak gereklidir."
+    },
+    {
+        "en": "Support",
+        "tr": "desteklemek",
+        "level": "C2",
+        "enSentence": "Thank you for your support.",
+        "trSentence": "Desteğiniz için teşekkür ederim."
+    },
+    {
+        "en": "Behavior",
+        "tr": "davranış",
+        "level": "C2",
+        "enSentence": "His behavior at the party was very rude.",
+        "trSentence": "Partideki davranışı çok kaba idi."
+    },
+    {
+        "en": "Effective",
+        "tr": "etkili",
+        "level": "C2",
+        "enSentence": "This medicine is very effective.",
+        "trSentence": "Bu ilaç çok etkilidir."
+    },
+    {
+        "en": "Focus",
+        "tr": "odaklanmak",
+        "level": "C2",
+        "enSentence": "Please focus on your work.",
+        "trSentence": "Lütfen işinize odaklanın."
+    },
+    {
+        "en": "Develop",
+        "tr": "geliştirmek",
+        "level": "C2",
+        "enSentence": "He wants to develop his skills.",
+        "trSentence": "Yeteneklerini geliştirmek istiyor."
+    },
+    {
+        "en": "Solve",
+        "tr": "çözmek",
+        "level": "C2",
+        "enSentence": "I need to solve this problem.",
+        "trSentence": "Bu sorunu çözmem gerekiyor."
+    },
+    {
+        "en": "Result",
+        "tr": "sonuç",
+        "level": "C2",
+        "enSentence": "The result of the experiment was unexpected.",
+        "trSentence": "Deneyin sonucu beklenmedikti."
+    },
+    {
+        "en": "Advantage",
+        "tr": "avantaj",
+        "level": "C2",
+        "enSentence": "Speaking two languages is a great advantage.",
+        "trSentence": "İki dil konuşmak büyük bir avantajdır."
+    },
+    {
+        "en": "Disadvantage",
+        "tr": "dezavantaj",
+        "level": "C2",
+        "enSentence": "The main disadvantage is the high cost.",
+        "trSentence": "En büyük dezavantajı yüksek maliyetidir."
+    },
+    {
+        "en": "Include",
+        "tr": "içermek",
+        "level": "C2",
+        "enSentence": "The price includes breakfast.",
+        "trSentence": "Fiyat kahvaltıyı içerir."
+    },
+    {
+        "en": "Depend",
+        "tr": "bağlı olmak",
+        "level": "C2",
+        "enSentence": "Our success depends on teamwork.",
+        "trSentence": "Başarımız takım çalışmasına bağlıdır."
+    },
+    {
+        "en": "Provide",
+        "tr": "sağlamak",
+        "level": "C2",
+        "enSentence": "We can provide you with all the necessary information.",
+        "trSentence": "Size gerekli tüm bilgileri sağlayabiliriz."
+    },
+    {
+        "en": "Goal",
+        "tr": "hedef",
+        "level": "C2",
+        "enSentence": "My goal is to learn a new language.",
+        "trSentence": "Hedefim yeni bir dil öğrenmek."
+    },
+    {
+        "en": "Decision",
+        "tr": "karar",
+        "level": "C2",
+        "enSentence": "Making a decision can be difficult.",
+        "trSentence": "Karar vermek zor olabilir."
+    },
+    {
+        "en": "Reliable",
+        "tr": "güvenilir",
+        "level": "C2",
+        "enSentence": "He is a very reliable person.",
+        "trSentence": "O çok güvenilir bir insan."
+    }
+];
+
+        // ———————————— STATE ————————————
+        let pool = [...ALL_WORDS];
+        let deck = [];
+        let viewedCards = [];
+        let savedCards = []; 
+        let idx = 0;
+        let flipped = false;
+
+        // Quiz State
+        let quizDeck = [];
+        let currentQuizIndex = 0;
+        let score = 0;
+        let totalQuestions = 0;
+        let quizActive = false;
+        let isAnswered = false;
+
+        // ———————————— ELMS ————————————
+        const views = { 
+            home: document.getElementById('home'), 
+            flash: document.getElementById('flash'), 
+            viewedCards: document.getElementById('viewedCards'),
+            addCard: document.getElementById('addCard'),
+            about: document.getElementById('about'),
+            contact: document.getElementById('contact'),
+            startFlashcards: document.getElementById('startFlashcards'),
+            quiz: document.getElementById('quiz')
+        };
+        const backBtn = document.getElementById('backBtn');
+        const levelButtonsContainer = document.getElementById('levelButtons');
+        const viewedCardsBtn = document.getElementById('viewedCardsBtn'); 
+        const addCardBtn = document.getElementById('addCardBtn');
+        const aboutBtn = document.getElementById('aboutBtn');
+        const contactBtn = document.getElementById('contactBtn');
+        const viewedCardsListEl = document.getElementById('viewedCardsList');
+        const addCardForm = document.getElementById('addCardForm');
+        const englishWordInput = document.getElementById('englishWord');
+        const turkishWordInput = document.getElementById('turkishWord');
+        // Yeni cümle inputları
+        const englishSentenceInput = document.getElementById('englishSentence');
+        const turkishSentenceInput = document.getElementById('turkishSentence');
+        const addCardLevelButtons = document.getElementById('addCardLevelButtons');
+        const addCardMessage = document.getElementById('addCardMessage');
+
+        const selectedLevelTextEl = document.getElementById('selectedLevelText');
+        const totalWordsEl = document.getElementById('totalWords');
+        const wordCountRange = document.getElementById('wordCountRange');
+        const selectedWordCountEl = document.getElementById('selectedWordCount');
+        const startSessionBtn = document.getElementById('startSessionBtn');
+        const startQuizBtn = document.getElementById('startQuizBtn');
+
+        const sceneEl = document.getElementById('scene');
+        const cardEl = document.getElementById('card');
+        const frontWord = document.getElementById('frontWord');
+        const frontSentence = document.getElementById('frontSentence'); // Yeni
+        const backWord  = document.getElementById('backWord');
+        const backSentence = document.getElementById('backSentence'); // Yeni
+        const idxEl = document.getElementById('idx');
+        const lenEl = document.getElementById('len');
+
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const flipBtn = document.getElementById('flipBtn');
+        const saveBtn = document.getElementById('saveBtn'); 
+        const speakENBtn = document.getElementById('speakEN');
+        const speakTRBtn = document.getElementById('speakTR');
+
+        // Quiz elements
+        const quizQuestionEl = document.getElementById('quiz-question');
+        const quizOptionsContainerEl = document.getElementById('quiz-options');
+        const quizScoreEl = document.getElementById('quiz-score');
+        const quizIdxEl = document.getElementById('quiz-idx');
+        const quizLenEl = document.getElementById('quiz-len');
+        const quizNextBtn = document.getElementById('quiz-next-btn');
+        const speakQuizTRBtn = document.getElementById('speakQuizTR');
+        
+        // ———————————— INIT ————————————
+        function initHome(){
+            pool = [...ALL_WORDS];
+            const allLevelButtons = document.querySelectorAll('.level-button');
+            allLevelButtons.forEach(btn => btn.classList.remove('active'));
+            quizActive = false;
+        }
+
+        function show(view){
+            Object.values(views).forEach(v=>v.classList.remove('active'));
+            views[view].classList.add('active');
+            backBtn.style.display = view !== 'home' ? 'inline-flex' : 'none';
+        }
+
+        function shuffle(arr){
+            for(let i=arr.length-1;i>0;i--){
+                const j = Math.floor(Math.random()*(i+1));
+                [arr[i],arr[j]]=[arr[j],arr[i]];
+            }
+            return arr;
+        }
+
+        // Seviye seçimi sonrası kelime sayısı ekranını gösterir
+        function showWordCountSelection(level){
+            const filteredWords = ALL_WORDS.filter(word => word.level === level);
+            if (filteredWords.length === 0) {
+                const messageBox = document.createElement('div');
+                messageBox.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: var(--panel);
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    padding: 24px;
+                    border-radius: 12px;
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+                    z-index: 1000;
+                    text-align: center;
+                `;
+                messageBox.innerHTML = `
+                    <p>Bu seviye için henüz kelime yok.</p>
+                    <button id="closeMessageBox" class="btn primary" style="margin-top: 16px;">Tamam</button>
+                `;
+                document.body.appendChild(messageBox);
+                document.getElementById('closeMessageBox').addEventListener('click', () => {
+                    document.body.removeChild(messageBox);
+                });
+                return;
+            }
+            // state'e geçici olarak filtreli kelimeleri atıyoruz
+            pool = [...filteredWords];
+            selectedLevelTextEl.textContent = level;
+            const totalCount = pool.length;
+            
+            // UI'ı güncelle
+            totalWordsEl.textContent = totalCount;
+            wordCountRange.max = totalCount;
+            const initialValue = Math.min(5, totalCount);
+            wordCountRange.value = initialValue;
+            selectedWordCountEl.textContent = initialValue;
+            
+            show('startFlashcards');
+        }
+
+        function startFlashcardSession(){
+            const wordCount = parseInt(wordCountRange.value, 10);
+            deck = shuffle(pool).slice(0, wordCount);
+            lenEl.textContent = deck.length;
+            idx = 0; flipped = false;
+            viewedCards = [];
+            renderCard();
+            show('flash');
+        }
+
+        // renderCard fonksiyonu, cümleleri de gösterecek şekilde güncellendi
+        function renderCard(){
+            const item = deck[idx];
+            if(!item){
+                frontWord.textContent = 'Bitti!';
+                frontSentence.textContent = '';
+                backWord.textContent = 'Tüm kartları bitirdiniz.';
+                backSentence.textContent = '';
+                nextBtn.disabled = true;
+                prevBtn.disabled = true;
+                saveBtn.disabled = true;
+                return;
+            }
+            frontWord.textContent = item.en;
+            frontSentence.textContent = item.enSentence;
+            backWord.textContent = item.tr;
+            backSentence.textContent = item.trSentence;
+            idxEl.textContent = String(idx+1);
+            cardEl.classList.remove('is-flipped');
+            flipped = false;
+            nextBtn.disabled = false;
+            prevBtn.disabled = false;
+            saveBtn.disabled = false;
+        }
+        
+        // Bu fonksiyon artık kaydedilen kartları gösteriyor
+        function showViewedCards(){
+            viewedCardsListEl.innerHTML = '';
+            // savedCards listesini kullan
+            if (savedCards.length === 0) {
+                viewedCardsListEl.innerHTML = '<p class="muted">Henüz hiç kart kaydetmediniz.</p>';
+            } else {
+                savedCards.forEach(card => {
+                    const item = document.createElement('div');
+                    item.className = 'word-list-item';
+                    // Cümleleri de ekleyerek listeyi zenginleştir
+                    item.innerHTML = `
+                        <div class="word-and-level">
+                            <span class="word-list-en">${card.en}</span>
+                            <span class="word-list-level">${card.level}</span>
+                        </div>
+                        <span class="word-list-tr">${card.tr}</span>
+                        <div class="word-list-sentence">${card.enSentence}</div>
+                        <div class="word-list-sentence">${card.trSentence}</div>
+                    `;
+                    item.addEventListener('click', () => {
+                        speak(card.en, 'en-US');
+                    });
+                    viewedCardsListEl.appendChild(item);
+                });
+            }
+            show('viewedCards');
+        }
+
+        // Yeni kart ekleme sayfasını gösterir
+        function showAddCard(){
+            addCardMessage.textContent = '';
+            addCardForm.reset();
+            document.querySelectorAll('#addCardLevelButtons .level-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector('#addCardLevelButtons .level-button[data-level="A1"]').classList.add('active');
+            show('addCard');
+        }
+
+        function showAbout(){
+            show('about');
+        }
+
+        function showContact(){
+            show('contact');
+        }
+
+        function flip(){ flipped = !flipped; cardEl.classList.toggle('is-flipped'); }
+        function next(){
+            if (deck[idx] && !viewedCards.includes(deck[idx])) {
+                viewedCards.push(deck[idx]);
+            }
+            idx = (idx+1) % deck.length;
+            renderCard();
+        }
+        function prev(){ idx = (idx-1+deck.length) % deck.length; renderCard(); }
+        
+        // Yeni "Kaydet" fonksiyonu
+        function saveCard() {
+            const currentCard = deck[idx];
+            const isAlreadySaved = savedCards.some(card => card.en === currentCard.en);
+            if (currentCard && !isAlreadySaved) {
+                savedCards.push(currentCard);
+                const messageBox = document.createElement('div');
+                messageBox.style.cssText = `
+                    position: fixed;
+                    bottom: 24px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: var(--good);
+                    color: white;
+                    padding: 12px 24px;
+                    border-radius: 12px;
+                    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+                    z-index: 1000;
+                    opacity: 0;
+                    transition: opacity 0.3s ease-in-out;
+                `;
+                messageBox.textContent = `"${currentCard.en}" kaydedildi!`;
+                document.body.appendChild(messageBox);
+                
+                setTimeout(() => {
+                    messageBox.style.opacity = '1';
+                }, 10);
+                setTimeout(() => {
+                    messageBox.style.opacity = '0';
+                    setTimeout(() => document.body.removeChild(messageBox), 300);
+                }, 2000);
+            }
+        }
+
+
+        // Yeni kart ekleme fonksiyonu, artık seviye ve cümleleri de alıyor
+        function addCard(en, tr, enSentence, trSentence, level) {
+            ALL_WORDS.push({ en: en, tr: tr, enSentence: enSentence, trSentence: trSentence, level: level });
+            initHome();
+        }
+
+        // Form gönderimi, yeni alanları içerecek şekilde güncellendi
+        function handleAddCardSubmit(e) {
+            e.preventDefault();
+            const enWord = englishWordInput.value.trim();
+            const trWord = turkishWordInput.value.trim();
+            const enSentence = englishSentenceInput.value.trim(); // Yeni
+            const trSentence = turkishSentenceInput.value.trim(); // Yeni
+            const activeLevelButton = addCardLevelButtons.querySelector('.level-button.active');
+            const level = activeLevelButton ? activeLevelButton.getAttribute('data-level') : 'A1';
+
+            if (enWord && trWord && enSentence && trSentence) {
+                addCard(enWord, trWord, enSentence, trSentence, level);
+                addCardMessage.textContent = 'Yeni kart başarıyla eklendi!';
+                addCardMessage.classList.add('show');
+                addCardForm.reset();
+                setTimeout(() => {
+                    addCardMessage.classList.remove('show');
+                }, 3000);
+                document.querySelectorAll('#addCardLevelButtons .level-button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                document.querySelector('#addCardLevelButtons .level-button[data-level="A1"]').classList.add('active');
+            } else {
+                addCardMessage.textContent = 'Lütfen tüm alanları doldurun.';
+                addCardMessage.classList.add('show');
+            }
+        }
+
+        // ———————————— TTS ————————————
+        function speak(text, lang){
+            try{
+                window.speechSynthesis.cancel();
+                const u = new SpeechSynthesisUtterance(text);
+                u.lang = lang; u.rate = 0.95; u.pitch = 1; u.volume = 1;
+                window.speechSynthesis.speak(u);
+            }catch(e){ console.warn('TTS desteklenmiyor', e); }
+        }
+
+        // ———————————— QUIZ LOGIC ————————————
+        function startQuizSession(){
+            const wordCount = parseInt(wordCountRange.value, 10);
+            quizDeck = shuffle(pool).slice(0, wordCount);
+            totalQuestions = quizDeck.length;
+            currentQuizIndex = 0;
+            score = 0;
+            quizActive = true;
+            isAnswered = false;
+            quizLenEl.textContent = totalQuestions;
+            quizScoreEl.textContent = score;
+            show('quiz');
+            renderQuizQuestion();
+        }
+
+        function renderQuizQuestion(){
+            if(currentQuizIndex >= totalQuestions){
+                endQuiz();
+                return;
+            }
+            
+            isAnswered = false;
+            quizNextBtn.style.display = 'none';
+
+            const currentWord = quizDeck[currentQuizIndex];
+            const level = currentWord.level;
+            const correctAnswer = currentWord.en;
+            
+            // Get distractors from the same level
+            const distractors = shuffle(ALL_WORDS.filter(w => w.level === level && w.en !== correctAnswer)).slice(0, 3);
+            const options = shuffle([correctAnswer, ...distractors.map(d => d.en)]);
+
+            quizQuestionEl.textContent = currentWord.tr;
+            quizIdxEl.textContent = currentQuizIndex + 1;
+            quizOptionsContainerEl.innerHTML = '';
+            
+            options.forEach(option => {
+                const optionEl = document.createElement('button');
+                optionEl.className = 'quiz-option';
+                optionEl.textContent = option;
+                optionEl.addEventListener('click', () => handleAnswer(optionEl, correctAnswer));
+                quizOptionsContainerEl.appendChild(optionEl);
+            });
+        }
+        
+        function handleAnswer(selectedOptionEl, correctAnswer){
+            if(isAnswered) return;
+
+            isAnswered = true;
+            const isCorrect = selectedOptionEl.textContent === correctAnswer;
+            if(isCorrect){
+                score++;
+                selectedOptionEl.classList.add('correct');
+            } else {
+                selectedOptionEl.classList.add('incorrect');
+                // Highlight the correct answer
+                const allOptions = quizOptionsContainerEl.querySelectorAll('.quiz-option');
+                allOptions.forEach(opt => {
+                    if(opt.textContent === correctAnswer){
+                        opt.classList.add('correct');
+                    }
+                });
+            }
+
+            quizScoreEl.textContent = score;
+            
+            // Disable all options after selection
+            quizOptionsContainerEl.querySelectorAll('.quiz-option').forEach(opt => {
+                opt.disabled = true;
+            });
+
+            quizNextBtn.style.display = 'inline-flex';
+        }
+
+        function nextQuizQuestion(){
+            currentQuizIndex++;
+            renderQuizQuestion();
+        }
+
+        function endQuiz(){
+            quizQuestionEl.textContent = 'Sınav Bitti!';
+            quizOptionsContainerEl.innerHTML = `<p class="quiz-end-message">Skorunuz: ${score} / ${totalQuestions}</p>`;
+            quizNextBtn.style.display = 'none';
+        }
+
+        // ———————————— EVENTS ————————————
+        levelButtonsContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('level-button')) {
+                const level = e.target.getAttribute('data-level');
+                const allLevelButtons = document.querySelectorAll('.level-button');
+                allLevelButtons.forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+                showWordCountSelection(level);
+            }
+        });
+        
+        addCardLevelButtons.addEventListener('click', (e) => {
+            if (e.target.classList.contains('level-button')) {
+                document.querySelectorAll('#addCardLevelButtons .level-button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                e.target.classList.add('active');
+            }
+        });
+
+        startSessionBtn.addEventListener('click', startFlashcardSession);
+        startQuizBtn.addEventListener('click', startQuizSession);
+        quizNextBtn.addEventListener('click', nextQuizQuestion);
+
+        wordCountRange.addEventListener('input', (e) => {
+            selectedWordCountEl.textContent = e.target.value;
+        });
+
+        backBtn.addEventListener('click', ()=>{ show('home'); window.speechSynthesis.cancel(); });
+
+        viewedCardsBtn.addEventListener('click', showViewedCards);
+        addCardBtn.addEventListener('click', showAddCard);
+        aboutBtn.addEventListener('click', showAbout);
+        contactBtn.addEventListener('click', showContact);
+
+        flipBtn.addEventListener('click', flip);
+        saveBtn.addEventListener('click', saveCard); 
+        nextBtn.addEventListener('click', next);
+        prevBtn.addEventListener('click', prev);
+
+        addCardForm.addEventListener('submit', handleAddCardSubmit);
+
+        window.addEventListener('keydown', (e)=>{
+            if(views.flash.classList.contains('active')){
+                if(e.code==='Space'){ e.preventDefault(); flip(); }
+                else if(e.key==='ArrowRight'){ next(); }
+                else if(e.key==='ArrowLeft'){ prev(); }
+            }
+        });
+
+        let startX=null;
+        document.getElementById('scene').addEventListener('touchstart', (e)=>{ startX = e.touches[0].clientX; }, {passive:true});
+        document.getElementById('scene').addEventListener('touchend', (e)=>{
+            if(startX===null) return; const dx = e.changedTouches[0].clientX - startX; startX=null;
+            if(Math.abs(dx) < 40) { flip(); return; }
+            if(dx < 0) next(); else prev();
+        });
+
+        cardEl.addEventListener('click', (e)=>{
+            if (e.target.closest('button')) {
+                return;
+            }
+            flip();
+        });
+
+        speakENBtn.addEventListener('click', ()=>{ if(deck[idx]) speak(deck[idx].enSentence, 'en-US'); });
+        speakTRBtn.addEventListener('click', ()=>{ if(deck[idx]) speak(deck[idx].trSentence, 'tr-TR'); });
+        speakQuizTRBtn.addEventListener('click', () => {
+            if(quizDeck[currentQuizIndex]) speak(quizDeck[currentQuizIndex].tr, 'tr-TR');
+        });
+
+        initHome();
+    </script>
+</body>
+</html>
