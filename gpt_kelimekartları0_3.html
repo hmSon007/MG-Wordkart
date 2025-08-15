@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MG WordKart</title>
+    <style>
+        :root{
+            --bg:#0f172a;           /* slate-900 */
+            --panel:#111827;        /* gray-900 */
+            --muted:#94a3b8;        /* slate-400 */
+            --text:#e5e7eb;         /* gray-200 */
+            --accent:#22d3ee;       /* cyan-400 */
+            --accent-2:#6366f1;     /* indigo-500 */
+            --good:#10b981;         /* emerald-500 */
+            --bad:#ef4444;          /* red-500 */
+        }
+        *{box-sizing:border-box}
+        html,body{height:100%}
+        body{
+            margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+            background: radial-gradient(1200px 800px at 70% -10%, #1f2937 0%, var(--bg) 60%);
+            color:var(--text);
+        }
+        .wrap{min-height:100%; display:flex; align-items:center; justify-content:center; padding:24px}
+        .panel{width:min(960px,100%); background:linear-gradient(180deg, rgba(255,255,255,0.04), transparent 120px), var(--panel); border:1px solid rgba(255,255,255,0.08); box-shadow:0 10px 40px rgba(0,0,0,0.35); border-radius:20px; padding:24px}
+        header{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px}
+        .brand{display:flex; align-items:center; gap:12px}
+        .logo{width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg, var(--accent), var(--accent-2)); display:grid; place-items:center; font-weight:700; color:#061018}
+        h1{font-size:20px; margin:0}
+        .muted{color:var(--muted)}
+
+        /* VIEWS */
+        .view{display:none}
+        .view.active{display:block}
+
+        /* HOME */
+        .home-grid{display:grid; grid-template-columns: 1.2fr 1fr; gap:24px}
+        @media (max-width: 800px){ .home-grid{grid-template-columns:1fr;}}
+        .card{background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:20px}
+        .row{display:flex; align-items:center; justify-content:space-between; gap:12px}
+        .kpi{font-size:32px; font-weight:700}
+        .range{width:100%}
+        input[type=range]{width:100%}
+        .btn{appearance:none; border:0; padding:12px 16px; border-radius:12px; font-weight:700; cursor:pointer}
+        .btn.primary{background:linear-gradient(135deg, var(--accent), var(--accent-2)); color:#061018}
+        .btn.ghost{background:transparent; color:var(--text); border:1px solid rgba(255,255,255,0.15)}
+        
+        /* Yeni buton stilleri */
+        .btn.gradient-blue{
+            background: linear-gradient(90deg, #6366f1, #22d3ee);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(34, 211, 238, 0.3);
+            transition: all 0.3s ease;
+        }
+        .btn.gradient-blue:hover{
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(34, 211, 238, 0.4);
+        }
+        
+        .btn.gradient-cyan{
+            background: linear-gradient(90deg, #22d3ee, #6366f1);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+            transition: all 0.3s ease;
+        }
+        .btn.gradient-cyan:hover{
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        }
+
+
+        /* FLASHCARDS */
+        .topbar{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px}
+        .counter{font-variant-numeric: tabular-nums; font-weight:700}
+        .flash-wrap{display:grid; gap:16px; place-items:center}
+        .flip-scene{width:min(560px, 92vw); height:320px; perspective:1200px}
+        .flip-card{position:relative; width:100%; height:100%; transform-style:preserve-3d; transition:transform .5s ease}
+        .flip-card.is-flipped{transform:rotateY(180deg)}
+        .face{
+            position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; text-align:center; font-size:clamp(22px, 5vw, 36px);
+            border-radius:18px; border:1px solid rgba(255,255,255,0.12);
+            background:linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+            box-shadow:inset 0 1px 0 rgba(255,255,255,0.05);
+            /* This line prevents the back of the card from being visible from the front */
+            backface-visibility: hidden;
+        }
+        .face.back{transform:rotateY(180deg)}
+        .word{line-height:1.2}
+        .speak{
+            display:flex; gap:8px;
+            /* These lines ensure the buttons are only visible on the respective face */
+            position:absolute; bottom:10px; right:10px;
+        }
+        .speak button{border:1px solid rgba(255,255,255,0.15); background:rgba(0,0,0,0.25); color:var(--text); border-radius:10px; padding:6px 10px; cursor:pointer; opacity:0.8;}
+        .speak button:hover{opacity:1;}
+
+        .controls{display:flex; gap:12px; flex-wrap:wrap; justify-content: center;}
+        .controls .btn{min-width:120px}
+        
+        .hint{font-size:12px; color:var(--muted)}
+
+        /* VIEWED CARDS LIST */
+        .word-list{display: grid; gap: 8px;}
+        .word-list-item{display: flex; justify-content: space-between; padding: 10px; border-radius: 8px; background: rgba(255, 255, 255, 0.05); cursor: pointer;}
+        .word-list-item:hover{background: rgba(255, 255, 255, 0.1);}
+        
+        /* ADD CARD */
+        .add-card-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .add-card-form label {
+            color: var(--muted);
+            font-size: 14px;
+        }
+        .add-card-form input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text);
+            font-size: 16px;
+        }
+        .add-card-form input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        .add-card-form .btn {
+            width: 100%;
+        }
+        .message {
+            margin-top: 12px;
+            text-align: center;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .message.show {
+            opacity: 1;
+        }
+        
+        /* ABOUT */
+        .about-content{padding: 16px; line-height: 1.6;}
+        .about-footer{
+            margin-top: 24px;
+            text-align: center;
+            font-size: 2.5em; /* Kocaman font */
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.1); /* Hafif soluk renk */
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <div class="panel">
+            <header>
+                <div class="brand">
+                    <div class="logo">MG</div>
+                    <div>
+                        <h1>MG WordKart</h1>
+                        <div class="muted">İngilizce ⇄ Türkçe kartlarla öğren</div>
+                    </div>
+                </div>
+                <button id="backBtn" class="btn ghost" style="display:none">← Ana sayfa</button>
+            </header>
+
+            <!-- HOME VIEW -->
+            <section id="home" class="view active">
+                <div class="home-grid">
+                    <div class="card">
+                        <h2 style="margin-top:0">Bugün kaç kelime çalışacaksın?</h2>
+                        <div class="row" style="margin:8px 0 16px">
+                            <div class="muted">Toplam kelime</div>
+                            <div class="kpi"><span id="totalCount">0</span></div>
+                        </div>
+                        <label for="countRange" class="muted">Seçim (min 5, max toplam)</label>
+                        <input id="countRange" class="range" type="range" min="5" max="5" value="5" />
+                        <div class="row" style="margin-top:6px">
+                            <div class="muted">Seçilen</div>
+                            <div class="kpi"><span id="chosenCount">5</span></div>
+                        </div>
+                        <div style="margin-top:16px; display:flex; gap:12px; flex-wrap:wrap">
+                            <button id="startBtn" class="btn primary">Kartlarla Öğren</button>
+                        </div>
+                        <p class="hint" style="margin-top:12px">İpucu: Space ile çevir, ← / → ile kart değiştir, mobilde sağa/sola kaydır.</p>
+                    </div>
+                    <div class="card">
+                        <h3 style="margin-top:0">Nasıl çalışır?</h3>
+                        <ol>
+                            <li>Kaç kelime çalışacağını seç.</li>
+                            <li>“Kartlarla Öğren”e tıkla.</li>
+                            <li>Kartın üstüne tıklayarak çevir.</li>
+                            <li>Ses ikonuyla telaffuz dinle (EN/TR).</li>
+                        </ol>
+                        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                            <button id="viewedCardsBtn" class="btn gradient-blue">BAKILAN KARTLAR</button>
+                            <button id="addCardBtn" class="btn gradient-cyan">YENİ KART EKLE</button>
+                            <button id="aboutBtn" class="btn ghost">HAKKINDA</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- FLASHCARDS VIEW -->
+            <section id="flash" class="view">
+                <div class="topbar">
+                    <div class="muted">Çalışma modu</div>
+                    <div class="counter"><span id="idx">1</span>/<span id="len">1</span></div>
+                </div>
+                <div class="flash-wrap">
+                    <div class="flip-scene" id="scene">
+                        <div class="flip-card" id="card">
+                            <div class="face front">
+                                <div class="word" id="frontWord">Hello</div>
+                                <div class="speak">
+                                    <button id="speakEN" title="İngilizce telaffuz">🔊 EN</button>
+                                </div>
+                            </div>
+                            <div class="face back">
+                                <div class="word" id="backWord">Merhaba</div>
+                                <div class="speak">
+                                    <button id="speakTR" title="Türkçe telaffuz">🔊 TR</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="controls">
+                        <button class="btn ghost" id="prevBtn">⬅ Önceki</button>
+                        <button class="btn primary" id="flipBtn">↻ Çevir</button>
+                        <button class="btn ghost" id="nextBtn">Sonraki ➡</button>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- VIEWED CARDS VIEW -->
+            <section id="viewedCards" class="view">
+                <h2 style="margin-top: 0;">Bakılan Kartlar</h2>
+                <div id="viewedCardsList" class="word-list">
+                    <!-- Cards will be populated here -->
+                </div>
+            </section>
+            
+            <!-- ADD CARD VIEW -->
+            <section id="addCard" class="view">
+                <h2 style="margin-top: 0;">Yeni Kart Ekle</h2>
+                <form id="addCardForm" class="add-card-form">
+                    <div>
+                        <label for="englishWord">İngilizce Kelime:</label>
+                        <input type="text" id="englishWord" name="englishWord" required>
+                    </div>
+                    <div>
+                        <label for="turkishWord">Türkçe Karşılığı:</label>
+                        <input type="text" id="turkishWord" name="turkishWord" required>
+                    </div>
+                    <button type="submit" class="btn primary">Karta Ekle</button>
+                </form>
+                <div id="addCardMessage" class="message"></div>
+            </section>
+
+            <!-- ABOUT VIEW -->
+            <section id="about" class="view">
+                <div class="about-content">
+                    <h2 style="margin-top: 0;">MG WordKart Hakkında</h2>
+                    <p>Bu uygulama, İngilizce kelime bilginizi flaş kartlar aracılığıyla geliştirmek için tasarlanmıştır. Belirlenen kelime sayısını çalışabilir ve daha önce çalıştığınız kelimeleri tekrar gözden geçirebilirsiniz.</p>
+                    <p>Uygulama, yerleşik bir kelime havuzu kullanır ve tarayıcınızın sesli okuma özelliğini kullanarak kelimelerin telaffuzunu dinlemenize olanak tanır.</p>
+                    <p>Uygulamayı kullandığınız için teşekkür ederiz!</p>
+                </div>
+                <div class="about-footer">
+                    MG STUDIOS
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        // ———————————— DATA ————————————
+        // Kelimelere 'level' özelliği eklenmiştir. Bu versiyonda kullanılmasa da veri yapısında korunmuştur.
+        const ALL_WORDS = [
+            {en:"Promotion", tr:"terfi", level: "a2"},
+            {en:"Client", tr:"müşteri", level: "a1"},
+            {en:"Reamed", tr:"azarlamak", level: "c1"},
+            {en:"Drag", tr:"sürüklemek", level: "a2"},
+            {en:"Above", tr:"üzerinde", level: "a1"},
+            {en:"Hired", tr:"işe alındı", level: "b1"},
+            {en:"Downsizing", tr:"küçülmek", level: "b2"},
+            {en:"Context", tr:"bağlam", level: "b1"},
+            {en:"Scold", tr:"sitem", level: "c2"},
+            {en:"Lecture", tr:"birinin davranışlarını eleştirmek amacıyla yapılan öfkeli veya ciddi konuşma | ders", level: "b2"},
+            {en:"Behave", tr:"davranmak", level: "a1"},
+            {en:"Silently", tr:"sessizce", level: "a2"},
+            {en:"Conditional", tr:"koşullu", level: "c1"},
+            {en:"Instead", tr:"başka bir şey yerine", level: "a2"},
+            {en:"Individual", tr:"bireysel", level: "b1"},
+            {en:"Extrude", tr:"dışarı çıkarmak, uzatmak", level: "c2"},
+            {en:"Heaven", tr:"cennet | gök", level: "b1"},
+            {en:"Exchange looks with", tr:"bakışmak", level: "b1"},
+            {en:"Through", tr:"başından sonuna kadar", level: "a1"},
+            {en:"Covered", tr:"kapalı", level: "a2"},
+            {en:"Ruin", tr:"kalıntı", level: "b1"},
+            {en:"Toward", tr:"doğru", level: "a2"},
+            {en:"Shook", tr:"sarsılmak", level: "b2"},
+            {en:"Tape", tr:"kaset", level: "a1"},
+            {en:"Outlaw", tr:"kanun kaçağı", level: "c1"},
+            {en:"Carrying", tr:"taşımak", level: "a2"},
+            {en:"Ceiling", tr:"tavan", level: "b1"},
+            {en:"Orb", tr:"küre", level: "c2"},
+            {en:"Surrounded", tr:"çevrili", level: "b2"},
+            {en:"Notice", tr:"algılamak", level: "a2"},
+            {en:"Roughly", tr:"kabaca | yaklaşık olarak", level: "b1"},
+            {en:"Patiently", tr:"sabırlı", level: "a2"},
+            {en:"Confuse", tr:"kafası karışmak", level: "b1"},
+            {en:"Flame-thrower", tr:"alev makinesi", level: "c2"},
+            {en:"Blew", tr:"patlamak | üflemek", level: "a1"},
+            {en:"Thought", tr:"düşünmek", level: "a2"},
+            {en:"Lifted", tr:"kaldırmak", level: "b1"},
+            {en:"Immediately", tr:"hemen", level: "a1"},
+            {en:"Pile", tr:"yığın", level: "b1"},
+            {en:"Stuck", tr:"sıkışmak", level: "a2"},
+            {en:"Agreement", tr:"anlaşma", level: "b2"},
+            {en:"Arranged", tr:"planlanmış", level: "b1"},
+            {en:"Interrupt", tr:"kesintiye uğramak", level: "c1"},
+            {en:"Disappear", tr:"yok olmak", level: "a2"},
+            {en:"Trouble", tr:"bela", level: "b1"},
+            {en:"Throat", tr:"boğaz", level: "b1"},
+            {en:"Discuss", tr:"tartışmak", level: "a2"},
+            {en:"Cross", tr:"geçmek", level: "a1"},
+            {en:"Tie", tr:"bağlamak", level: "a1"},
+            {en:"Shelf", tr:"raf", level: "a2"},
+            {en:"Wide", tr:"geniş", level: "a1"},
+            {en:"Document", tr:"belge", level: "a2"},
+            {en:"Earn", tr:"para kazanmak", level: "b1"},
+            {en:"Light", tr:"hafif", level: "a1"},
+            {en:"Thirsty", tr:"susamış", level: "a1"},
+            {en:"Cost", tr:"maliyet", level: "a2"},
+            {en:"Roof", tr:"çatı", level: "b1"},
+            {en:"Borrow", tr:"ödünç almak", level: "b1"},
+            {en:"Crowded", tr:"kalabalık", level: "b1"},
+            {en:"Toe", tr:"ayak parmağı", level: "a2"},
+            {en:"Shout", tr:"haykırmak", level: "a1"},
+            {en:"Kick", tr:"tekmelemek", level: "a2"},
+            {en:"Steal", tr:"çalmak", level: "b1"},
+            {en:"Whole", tr:"bütün", level: "a1"},
+            {en:"Agree", tr:"hemfikir olmak", level: "a2"},
+            {en:"Stomachache", tr:"karın ağrısı", level: "a1"},
+            {en:"Straight", tr:"düz", level: "a2"},
+            {en:"Attractive", tr:"çekici", level: "b1"},
+            {en:"Elevator", tr:"asansör", level: "a2"},
+            {en:"Terrible", tr:"korkunç", level: "a1"},
+            {en:"Catch", tr:"yakalamak", level: "a2"},
+            {en:"Capital", tr:"başkent", level: "b1"},
+            {en:"Discount", tr:"indirim", level: "b1"},
+            {en:"Improve", tr:"iyileştirmek | geliştirmek", level: "b2"},
+            {en:"Invention", tr:"icat", level: "b1"},
+            {en:"Attention", tr:"dikkat", level: "a1"},
+            {en:"Hide", tr:"saklanmak", level: "a2"},
+            {en:"Merchant", tr:"tüccar", level: "c1"},
+            {en:"Prescription", tr:"reçete", level: "c1"},
+            {en:"Dock", tr:"rıhtım", level: "b2"},
+            {en:"Stir", tr:"karıştırmak", level: "a1"},
+            {en:"Insist", tr:"ısrar etmek", level: "b2"},
+            {en:"Defeat", tr:"yenmek", level: "b2"},
+            {en:"Check out", tr:"çıkış yapmak", level: "a2"},
+            {en:"Decrease", tr:"azalmak", level: "c1"},
+            {en:"Hang", tr:"asmak", level: "a1"},
+            {en:"Hug", tr:"sarılmak", level: "a1"},
+            {en:"Bite", tr:"ısırmak", level: "a2"},
+            {en:"Pronounce", tr:"telaffuz etmek", level: "b1"},
+            {en:"Distance", tr:"mesafe", level: "a2"},
+            {en:"Trick", tr:"hile", level: "b1"},
+            {en:"Burn", tr:"yakmak", level: "a2"},
+            {en:"Relax", tr:"rahatlamak", level: "a1"},
+            {en:"Fold", tr:"katlamak", level: "a2"},
+            {en:"Explorer", tr:"kaşif", level: "b1"},
+            {en:"Apologize", tr:"özür dilemek", level: "b2"},
+            {en:"Pentagon", tr:"beşgen", level: "c1"},
+            {en:"Mind", tr:"zihin", level: "a2"},
+            {en:"Departure", tr:"kalkış", level: "b2"},
+            {en:"Dirt", tr:"kir", level: "a1"},
+            {en:"Essay", tr:"deneme", level: "c1"},
+            {en:"Disturbance", tr:"rahatsızlık", level: "c2"},
+            {en:"Fountain", tr:"fıskiye", level: "b1"},
+            {en:"Dungeon", tr:"zindan", level: "c2"},
+            {en:"Announce", tr:"duyurmak", level: "b1"},
+            {en:"Nasty", tr:"berbat", level: "c2"},
+            {en:"Patient", tr:"sabırlı", level: "a2"},
+            {en:"Recommend", tr:"tavsiye etmek", level: "b1"},
+            {en:"Harbor", tr:"liman", level: "b2"},
+            {en:"Attitude", tr:"tavır", level: "c1"},
+            {en:"Opinion", tr:"fikir | görüş", level: "a2"},
+            {en:"Apology", tr:"özür", level: "b2"},
+            {en:"Proud", tr:"gururlu", level: "a1"},
+            {en:"Expedition", tr:"sefer", level: "c1"},
+            {en:"Defect", tr:"kusur", level: "c2"},
+            {en:"Slander", tr:"iftira", level: "c1"},
+            {en:"Tailor", tr:"terzi", level: "c2"},
+            {en:"Explode", tr:"patlamak", level: "b1"},
+            {en:"Bury", tr:"gömmek", level: "b2"},
+            {en:"Complain", tr:"şikayet etmek", level: "b2"},
+            {en:"Spare", tr:"yedek", level: "c1"},
+            {en:"Tiny", tr:"küçücük", level: "a1"},
+            {en:"Epidemic", tr:"salgın", level: "c2"},
+            {en:"Hurry", tr:"acele etmek", level: "a1"},
+            {en:"Calendar", tr:"takvim", level: "a1"},
+            {en:"Polite", tr:"kibar", level: "a2"},
+            {en:"Rent", tr:"kiralamak", level: "b1"},
+            {en:"North", tr:"kuzey", level: "a1"},
+            {en:"Mall", tr:"AVM, büyük kapalı alışveriş merkezi", level: "a2"},
+            {en:"Meter", tr:"metre", level: "a1"},
+            {en:"Tall", tr:"uzun, uzun boylu", level: "a1"},
+            {en:"Faucet", tr:"musluk", level: "b2"},
+            {en:"Innocently", tr:"masumca", level: "c1"},
+            {en:"Recognize", tr:"tanımak, bilmek", level: "b1"},
+            {en:"Nervously", tr:"sinirli/tedirgin bir şekilde", level: "c2"},
+            {en:"Several", tr:"birkaç", level: "b1"},
+            {en:"Taught", tr:"öğretmek (teach fiilinin geçmiş zamanı)", level: "a2"},
+            {en:"Decision", tr:"karar", level: "b1"},
+            {en:"Obey", tr:"itaat etmek, söz dinlemek", level: "b2"},
+            {en:"Honor", tr:"şeref, onur", level: "c1"},
+            {en:"Xandarians", tr:"Xandar halkı (özel isim)", level: "c2"},
+            {en:"Commanded", tr:"emretmek, komuta etmek", level: "b1"},
+            {en:"Sword", tr:"kılıç", level: "b2"},
+            {en:"Examined", tr:"incelemek, muayene etmek", level: "c1"},
+            {en:"Replied", tr:"yanıtlamak, cevap vermek", level: "a2"},
+            {en:"Continued", tr:"devam etmek", level: "a1"},
+            {en:"Fear", tr:"korku, endişe", level: "a2"},
+            {en:"Madman", tr:"deli, çılgın adam", level: "c1"},
+            {en:"Scared", tr:"korkmuş, ürkmüş", level: "a1"},
+            {en:"Dishonorable", tr:"onursuz, haysiyetsiz", level: "c2"},
+            {en:"Men", tr:"adamlar (man kelimesinin çoğulu)", level: "a1"},
+            {en:"Rushed", tr:"acele etmek, koşuşturmak", level: "a2"},
+            {en:"Quill", tr:"Quill (özel isim)", level: "c2"},
+            {en:"Amount", tr:"miktar", level: "b1"},
+            {en:"Counter", tr:"tezgah, banko", level: "a2"},
+            {en:"Accuser", tr:"suçlayıcı (özel bir unvan)", level: "c1"},
+            {en:"Brought", tr:"getirmek, götürmek (bring V2)", level: "b2"},
+            {en:"Feared", tr:"korkmak, çekinmek", level: "b1"},
+            {en:"Guilty", tr:"suçlu", level: "a2"},
+            {en:"Stood", tr:"durmak, ayakta durmak (stand V2)", level: "b1"}
+        ];
+
+        // ———————————— STATE ————————————
+        let pool = [...ALL_WORDS];
+        let deck = [];
+        let viewedCards = []; // Yeni eklenen: Çalışılan kartların listesi
+        let idx = 0;
+        let flipped = false;
+
+        // ———————————— ELMS ————————————
+        const views = { 
+            home: document.getElementById('home'), 
+            flash: document.getElementById('flash'), 
+            viewedCards: document.getElementById('viewedCards'),
+            addCard: document.getElementById('addCard'), // Yeni eklenen "Yeni Kart Ekle" görünümü
+            about: document.getElementById('about') // Yeni eklenen hakkında görünümü
+        };
+        const backBtn = document.getElementById('backBtn');
+        const totalCountEl = document.getElementById('totalCount');
+        const chosenCountEl = document.getElementById('chosenCount');
+        const range = document.getElementById('countRange');
+        const startBtn = document.getElementById('startBtn');
+        const viewedCardsBtn = document.getElementById('viewedCardsBtn'); 
+        const addCardBtn = document.getElementById('addCardBtn'); // Yeni eklenen "Yeni Kart Ekle" butonu
+        const aboutBtn = document.getElementById('aboutBtn'); // Yeni eklenen hakkında butonu
+        const viewedCardsListEl = document.getElementById('viewedCardsList');
+        const addCardForm = document.getElementById('addCardForm'); // Yeni kart ekleme formu
+        const englishWordInput = document.getElementById('englishWord'); // İngilizce kelime inputu
+        const turkishWordInput = document.getElementById('turkishWord'); // Türkçe kelime inputu
+        const addCardMessage = document.getElementById('addCardMessage'); // Mesaj alanı
+
+        const sceneEl = document.getElementById('scene');
+        const cardEl = document.getElementById('card');
+        const frontWord = document.getElementById('frontWord');
+        const backWord  = document.getElementById('backWord');
+        const idxEl = document.getElementById('idx');
+        const lenEl = document.getElementById('len');
+
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const flipBtn = document.getElementById('flipBtn');
+        const speakENBtn = document.getElementById('speakEN');
+        const speakTRBtn = document.getElementById('speakTR');
+
+        // ———————————— INIT ————————————
+        function initHome(){
+            totalCountEl.textContent = ALL_WORDS.length; // Toplam kelime sayısını ALL_WORDS'ten al
+            range.max = ALL_WORDS.length;
+            if(+range.value < 5) range.value = 5;
+            if(+range.value > ALL_WORDS.length) range.value = ALL_WORDS.length;
+            chosenCountEl.textContent = range.value;
+            // Kelime havuzunu başlangıçta tüm kelimelerle doldur
+            pool = [...ALL_WORDS];
+        }
+
+        function show(view){
+            Object.values(views).forEach(v=>v.classList.remove('active'));
+            views[view].classList.add('active');
+            backBtn.style.display = view !== 'home' ? 'inline-flex' : 'none';
+        }
+
+        // Shuffle fonksiyonu artık bir butonla çağrılmadığı için start() içinde kullanılacak.
+        function shuffle(arr){
+            for(let i=arr.length-1;i>0;i--){
+                const j = Math.floor(Math.random()*(i+1));
+                [arr[i],arr[j]]=[arr[j],arr[i]];
+            }
+            return arr;
+        }
+
+        function start(){
+            const n = Math.max(5, Math.min(pool.length, +range.value||5));
+            deck = shuffle([...pool]).slice(0,n);
+            lenEl.textContent = deck.length;
+            idx = 0; flipped = false;
+            viewedCards = []; // Çalışmaya başlarken listeyi sıfırla
+            renderCard();
+            show('flash');
+        }
+
+        function renderCard(){
+            const item = deck[idx];
+            if(!item){
+                frontWord.textContent = 'Bitti!';
+                backWord.textContent = 'Tüm kartları bitirdiniz.';
+                return;
+            }
+            frontWord.textContent = item.en;
+            backWord.textContent = item.tr;
+            idxEl.textContent = String(idx+1);
+            cardEl.classList.remove('is-flipped');
+            flipped = false;
+        }
+        
+        // Bakılan kartları listeler
+        function showViewedCards(){
+            viewedCardsListEl.innerHTML = ''; // Listeyi temizle
+            if (viewedCards.length === 0) {
+                viewedCardsListEl.innerHTML = '<p class="muted">Henüz hiç kart çalışmadınız. Başlamak için "Kartlarla Öğren" butonuna tıklayın.</p>';
+            } else {
+                viewedCards.forEach(card => {
+                    const item = document.createElement('div');
+                    item.className = 'word-list-item';
+                    item.innerHTML = `<span>${card.en}</span><span>${card.tr}</span>`;
+                    item.addEventListener('click', () => {
+                        speak(card.en, 'en-US'); // Tıklayınca kelimeyi seslendir
+                    });
+                    viewedCardsListEl.appendChild(item);
+                });
+            }
+            show('viewedCards');
+        }
+
+        // Yeni kart ekleme sayfasını gösterir
+        function showAddCard(){
+            addCardMessage.textContent = '';
+            addCardForm.reset(); // Formu temizle
+            show('addCard');
+        }
+
+        // Hakkında sayfasını gösterir
+        function showAbout(){
+            show('about');
+        }
+
+        function flip(){ flipped = !flipped; cardEl.classList.toggle('is-flipped'); }
+        function next(){
+            // Bir sonraki karta geçmeden önce mevcut kartı bakılanlar listesine ekle
+            if (deck[idx] && !viewedCards.includes(deck[idx])) {
+                viewedCards.push(deck[idx]);
+            }
+            idx = (idx+1) % deck.length;
+            renderCard();
+        }
+        function prev(){ idx = (idx-1+deck.length) % deck.length; renderCard(); }
+
+        // Yeni kartı ALL_WORDS'e ekleme fonksiyonu
+        function addCard(en, tr) {
+            ALL_WORDS.push({ en: en, tr: tr, level: "user-added" });
+            initHome(); // Toplam kelime sayısını güncelle
+        }
+
+        // Formu gönderince çalışacak fonksiyon
+        function handleAddCardSubmit(e) {
+            e.preventDefault();
+            const enWord = englishWordInput.value.trim();
+            const trWord = turkishWordInput.value.trim();
+
+            if (enWord && trWord) {
+                addCard(enWord, trWord);
+                addCardMessage.textContent = 'Yeni kart başarıyla eklendi!';
+                addCardMessage.classList.add('show');
+                addCardForm.reset();
+                setTimeout(() => {
+                    addCardMessage.classList.remove('show');
+                }, 3000);
+            } else {
+                addCardMessage.textContent = 'Lütfen her iki alanı da doldurun.';
+                addCardMessage.classList.add('show');
+            }
+        }
+
+        // ———————————— TTS ————————————
+        function speak(text, lang){
+            try{
+                window.speechSynthesis.cancel();
+                const u = new SpeechSynthesisUtterance(text);
+                u.lang = lang; u.rate = 0.95; u.pitch = 1; u.volume = 1;
+                window.speechSynthesis.speak(u);
+            }catch(e){ console.warn('TTS desteklenmiyor', e); }
+        }
+
+        // ———————————— EVENTS ————————————
+        // Start buttonuna tıklandığında doğrudan flashcard ekranına geçiş yapar.
+        startBtn.addEventListener('click', start);
+
+        range.addEventListener('input', ()=>{ chosenCountEl.textContent = range.value; });
+        backBtn.addEventListener('click', ()=>{ show('home'); window.speechSynthesis.cancel(); });
+
+        // Yeni butonlar için event listener'lar
+        viewedCardsBtn.addEventListener('click', showViewedCards);
+        addCardBtn.addEventListener('click', showAddCard); // Yeni kart ekle butonu
+        aboutBtn.addEventListener('click', showAbout);
+
+        // Ayrı flip, next ve prev butonları için event listenerlar
+        flipBtn.addEventListener('click', flip);
+        nextBtn.addEventListener('click', next);
+        prevBtn.addEventListener('click', prev);
+
+        // Yeni kart ekleme formu için event listener
+        addCardForm.addEventListener('submit', handleAddCardSubmit);
+
+        // Klavye kısayolları
+        window.addEventListener('keydown', (e)=>{
+            if(views.flash.classList.contains('active')){
+                if(e.code==='Space'){ e.preventDefault(); flip(); }
+                else if(e.key==='ArrowRight'){ next(); }
+                else if(e.key==='ArrowLeft'){ prev(); }
+            }
+        });
+
+        // Swipe (touch) desteği
+        let startX=null;
+        document.getElementById('scene').addEventListener('touchstart', (e)=>{ startX = e.touches[0].clientX; }, {passive:true});
+        document.getElementById('scene').addEventListener('touchend', (e)=>{
+            if(startX===null) return; const dx = e.changedTouches[0].clientX - startX; startX=null;
+            if(Math.abs(dx) < 40) { flip(); return; }
+            if(dx < 0) next(); else prev();
+        });
+
+        // Kartın kendisine tıklayınca dönmesi için event listener
+        cardEl.addEventListener('click', (e)=>{
+            // Tıklanan elementin bir buton olup olmadığını kontrol et
+            if (e.target.closest('button')) {
+                // Eğer bir butonsa, kartı döndürme işlemini durdur
+                return;
+            }
+            flip();
+        });
+
+        // TTS butonları için ayrı event listenerlar
+        speakENBtn.addEventListener('click', ()=>{ if(deck[idx]) speak(deck[idx].en, 'en-US'); });
+        speakTRBtn.addEventListener('click', ()=>{ if(deck[idx]) speak(deck[idx].tr, 'tr-TR'); });
+
+        // Uygulama başlangıcı
+        initHome();
+    </script>
+</body>
+</html>
